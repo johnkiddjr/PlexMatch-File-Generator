@@ -7,7 +7,7 @@ var arguments = Environment.GetCommandLineArgs().ToList();
 string plexToken = string.Empty;
 string plexUrl = string.Empty;
 
-if (arguments.Any())
+if (arguments.Count() > 1)
 {
     var urlArgument = arguments.Where(arg => arg == "--url" || arg == "-u").FirstOrDefault();
     var tokenArgument = arguments.Where(arg => arg == "--token" || arg == "-t").FirstOrDefault();
@@ -103,6 +103,11 @@ foreach (var library in libraries)
 
         foreach (var locationInfo in locationInfos)
         {
+            if (locationInfo.MediaItemLocations is null)
+            {
+                continue;
+            }
+
             foreach (var location in locationInfo.MediaItemLocations)
             {
                 using System.IO.StreamWriter sw = new System.IO.StreamWriter($"{location.MediaItemPath}/.plexmatch", false);

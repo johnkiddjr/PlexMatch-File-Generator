@@ -10,6 +10,7 @@ namespace PlexMatchGenerator.RestModels
 
     public class MediaItemInfoRoot
     {
+        [JsonProperty("MediaContainer")]
         public MediaItemInfoContainer MediaItemInfoContainer { get; set; }
     }
 
