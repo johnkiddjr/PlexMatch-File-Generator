@@ -5,8 +5,8 @@ using PlexMatchGenerator.RestModels;
 using RestSharp;
 
 var arguments = Environment.GetCommandLineArgs().ToList();
-string plexToken = string.Empty;
-string plexUrl = string.Empty;
+string plexToken;
+string plexUrl;
 
 (plexUrl, plexToken) = ArgumentHelper.ProcessCommandLineArguments(arguments);
 
