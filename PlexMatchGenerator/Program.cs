@@ -1,105 +1,42 @@
 ﻿// check for a paramter of the plex token, prompt if not present
+using PlexMatchGenerator.Constants;
+using PlexMatchGenerator.Helpers;
 using PlexMatchGenerator.RestModels;
 using RestSharp;
-using RestSharp.Serializers.NewtonsoftJson;
 
 var arguments = Environment.GetCommandLineArgs().ToList();
-string plexToken = string.Empty;
-string plexUrl = string.Empty;
+string plexToken;
+string plexUrl;
 
-if (arguments.Count() > 1)
+(plexUrl, plexToken) = ArgumentHelper.ProcessCommandLineArguments(arguments);
+
+if (ArgumentHelper.CheckAndGetIfPlexUrlBlank(ref plexUrl) || ArgumentHelper.CheckAndGetIfPlexTokenBlank(ref plexToken))
 {
-    var urlArgument = arguments.Where(arg => arg == "--url" || arg == "-u").FirstOrDefault();
-    var tokenArgument = arguments.Where(arg => arg == "--token" || arg == "-t").FirstOrDefault();
-
-    if (urlArgument is null)
-    {
-        Console.WriteLine("No value was passed for the url... Exiting...");
-        return;
-    }
-
-    if (tokenArgument is null)
-    {
-        Console.WriteLine("No value was passed for the token... Exiting...");
-        return;
-    }
-
-    plexUrl = arguments[arguments.IndexOf(urlArgument) + 1];
-
-    if (plexUrl.StartsWith("-") || !plexUrl.StartsWith("http"))
-    {
-        Console.WriteLine("Plex Url malformed. Urls must start with http or https");
-        return;
-    }
-
-    plexToken = arguments[arguments.IndexOf(tokenArgument) + 1];
-}
-
-if (string.IsNullOrEmpty(plexUrl))
-{
-    Console.WriteLine("Please enter your Plex Server Url: ");
-    plexUrl = Console.ReadLine();
-
-    if (string.IsNullOrEmpty(plexUrl))
-    {
-        Console.WriteLine("No value was entered for the server url... Exiting...");
-        return;
-    }
-
-    if (!plexUrl.StartsWith("http"))
-    {
-        Console.WriteLine("Plex Url malformed. Urls must start with http or https");
-        return;
-    }
-}
-
-if (string.IsNullOrEmpty(plexToken))
-{
-    Console.WriteLine("Please enter your Plex Token: ");
-    plexToken = Console.ReadLine();
-
-    if (plexToken == null)
-    {
-        Console.WriteLine("No value was entered for the token... Exiting...");
-        return;
-    }
+    Console.WriteLine(MessageConstants.ArgumentsMissing);
+    return;
 }
 
 // connect to plex and get a list of libraries
-if (!plexUrl.EndsWith("/"))
-{
-    plexUrl += "/";
-}
 
-RestClient client = new RestClient(plexUrl);
-client.UseNewtonsoftJson();
-client.AddDefaultHeader("Accept", "application/json");
-client.AddDefaultHeader("X-Plex-Token", plexToken);
+var client = RestClientHelper.GenerateClient(plexUrl, plexToken);
 
-RestRequest request = new RestRequest("library/sections", Method.Get);
-var response = client.ExecuteGetAsync<LibraryRoot>(request);
-
-response.Wait(5000);
-
-var libraries = response.Result.Data?.LibraryContainer?.Libraries;
+var libraries = RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiUrlConstants.LibrarySectionsRequestUrl, Method.Get)
+    .LibraryContainer
+    .Libraries;
 
 // step through the libraries and get a list of the items and their folders
 foreach (var library in libraries)
 {
-    var getItemsInLibrary = new RestRequest($"library/sections/{library.LibraryId}/all", Method.Get);
-    var libraryItemResponse = client.ExecuteGetAsync<MediaItemRoot>(getItemsInLibrary);
-    libraryItemResponse.Wait(10000);
-
-    var items = libraryItemResponse.Result.Data?.MediaItemContainer?.MediaItems;
+    var items = RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiUrlConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiUrlConstants.SearchAll}", Method.Get)
+        .MediaItemContainer
+        .MediaItems;
 
     // step through each item in the library and get it's tvdbid and drop a .plexmatch file in it's root
     foreach (var item in items)
     {
-        var getLocationForItem = new RestRequest($"library/metadata/{item.MediaItemId}", Method.Get);
-        var itemLocationResponse = client.ExecuteGetAsync<MediaItemInfoRoot>(getLocationForItem);
-        itemLocationResponse.Wait(2000);
-
-        var locationInfos = itemLocationResponse.Result.Data?.MediaItemInfoContainer?.MediaItemInfos;
+        var locationInfos = RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiUrlConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get)
+            .MediaItemInfoContainer
+            .MediaItemInfos;
 
         foreach (var locationInfo in locationInfos)
         {
@@ -112,14 +49,16 @@ foreach (var library in libraries)
             {
                 if (Directory.Exists(location.MediaItemPath))
                 {
-                    using StreamWriter sw = new StreamWriter($"{location.MediaItemPath}/.plexmatch", false);
-                    sw.WriteLine($"Title: {item.MediaItemTitle}");
-                    sw.WriteLine($"Year: {item.MediaItemReleaseYear}");
-                    sw.WriteLine($"Guid: {item.MediaItemPlexMatchGuid}");
+                    using StreamWriter sw = new StreamWriter($"{location.MediaItemPath}/{MediaConstants.PlexMatchFileName}", false);
+                    sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
+                    sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
+                    sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
+
+                    Console.WriteLine($"{MessageConstants.PlexMatchWritten} {item.MediaItemTitle}");
                 }
                 else
                 {
-                    Console.WriteLine($"Folder {location.MediaItemPath} does not exist.");
+                    Console.WriteLine($"{MessageConstants.FolderMissingOrInvalid} {location.MediaItemPath}");
                 }
             }
         }
@@ -127,4 +66,4 @@ foreach (var library in libraries)
 }
 
 // write to console the result of the operation
-Console.WriteLine("Operation Completed");
+Console.WriteLine(MessageConstants.CompletedMessage);
