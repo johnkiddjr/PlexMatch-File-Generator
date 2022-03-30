@@ -10,7 +10,7 @@ string plexUrl;
 
 (plexUrl, plexToken) = ArgumentHelper.ProcessCommandLineArguments(arguments);
 
-if (ArgumentHelper.CheckAndGetIfPlexUrlBlank(ref plexUrl) || ArgumentHelper.CheckAndGetIfPlexTokenBlank(ref plexToken))
+if (!ArgumentHelper.CheckAndGetIfPlexUrlBlank(ref plexUrl) || !ArgumentHelper.CheckAndGetIfPlexTokenBlank(ref plexToken))
 {
     Console.WriteLine(MessageConstants.ArgumentsMissing);
     return;

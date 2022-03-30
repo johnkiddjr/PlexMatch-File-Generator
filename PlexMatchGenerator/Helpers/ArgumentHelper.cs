@@ -60,6 +60,6 @@
 
         // This stub exists for potential future expansion only
         private static bool ValidatePlexToken(string plexToken) =>
-            string.IsNullOrEmpty(plexToken);
+            !string.IsNullOrEmpty(plexToken);
     }
 }
