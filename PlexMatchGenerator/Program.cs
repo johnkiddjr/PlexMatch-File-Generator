@@ -1,8 +1,8 @@
 ﻿// check for a paramter of the plex token, prompt if not present
+using PlexMatchGenerator.Constants;
 using PlexMatchGenerator.Helpers;
 using PlexMatchGenerator.RestModels;
 using RestSharp;
-using RestSharp.Serializers.NewtonsoftJson;
 
 var arguments = Environment.GetCommandLineArgs().ToList();
 string plexToken = string.Empty;
@@ -12,7 +12,7 @@ string plexUrl = string.Empty;
 
 if (ArgumentHelper.CheckAndGetIfPlexUrlBlank(ref plexUrl) || ArgumentHelper.CheckAndGetIfPlexTokenBlank(ref plexToken))
 {
-    Console.WriteLine("Plex Server URL and Plex Token are required! Exiting...");
+    Console.WriteLine(MessageConstants.ArgumentsMissing);
     return;
 }
 
@@ -20,21 +20,21 @@ if (ArgumentHelper.CheckAndGetIfPlexUrlBlank(ref plexUrl) || ArgumentHelper.Chec
 
 var client = RestClientHelper.GenerateClient(plexUrl, plexToken);
 
-var libraries = RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, "library/sections", Method.Get)
+var libraries = RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiUrlConstants.LibrarySectionsRequestUrl, Method.Get)
     .LibraryContainer
     .Libraries;
 
 // step through the libraries and get a list of the items and their folders
 foreach (var library in libraries)
 {
-    var items = RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"library/sections/{library.LibraryId}/all", Method.Get)
+    var items = RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiUrlConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiUrlConstants.SearchAll}", Method.Get)
         .MediaItemContainer
         .MediaItems;
 
     // step through each item in the library and get it's tvdbid and drop a .plexmatch file in it's root
     foreach (var item in items)
     {
-        var locationInfos = RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"library/metadata/{item.MediaItemId}", Method.Get)
+        var locationInfos = RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiUrlConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get)
             .MediaItemInfoContainer
             .MediaItemInfos;
 
@@ -49,14 +49,16 @@ foreach (var library in libraries)
             {
                 if (Directory.Exists(location.MediaItemPath))
                 {
-                    using StreamWriter sw = new StreamWriter($"{location.MediaItemPath}/.plexmatch", false);
-                    sw.WriteLine($"Title: {item.MediaItemTitle}");
-                    sw.WriteLine($"Year: {item.MediaItemReleaseYear}");
-                    sw.WriteLine($"Guid: {item.MediaItemPlexMatchGuid}");
+                    using StreamWriter sw = new StreamWriter($"{location.MediaItemPath}/{MediaConstants.PlexMatchFileName}", false);
+                    sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
+                    sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
+                    sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
+
+                    Console.WriteLine($"{MessageConstants.PlexMatchWritten} {item.MediaItemTitle}");
                 }
                 else
                 {
-                    Console.WriteLine($"Folder {location.MediaItemPath} does not exist.");
+                    Console.WriteLine($"{MessageConstants.FolderMissingOrInvalid} {location.MediaItemPath}");
                 }
             }
         }
@@ -64,4 +66,4 @@ foreach (var library in libraries)
 }
 
 // write to console the result of the operation
-Console.WriteLine("Operation Completed");
+Console.WriteLine(MessageConstants.CompletedMessage);
