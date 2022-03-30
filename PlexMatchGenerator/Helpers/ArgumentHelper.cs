@@ -43,6 +43,11 @@ namespace PlexMatchGenerator.Helpers
                 if (logArgument != null)
                 {
                     logPath = args[args.IndexOf(logArgument) + 1];
+
+                    if (!logPath.EndsWith("/"))
+                    {
+                        logPath += "/";
+                    }
                 }
             }
 
@@ -50,7 +55,7 @@ namespace PlexMatchGenerator.Helpers
             {
                 PlexServerUrl = plexUrl,
                 PlexServerToken = plexToken,
-                LogPath = string.IsNullOrEmpty(logPath) ? Environment.CurrentDirectory : logPath,
+                LogPath = logPath,
                 HostRootPath = hostPath,
                 PlexRootPath = plexPath
             };

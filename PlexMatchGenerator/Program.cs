@@ -38,7 +38,7 @@ namespace PlexMatchGenerator
                     .MinimumLevel.Information()
                     .Enrich.With(new MachineNameEnricher())
                     .WriteTo.Console()
-                    .WriteTo.File(path: generatorOptions.LogPath)
+                    .WriteTo.File(path: $"{generatorOptions.LogPath}plexmatch.log")
                     .CreateLogger();
             }
 

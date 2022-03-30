@@ -85,9 +85,16 @@ namespace PlexMatchGenerator.Services
 
                             foreach (var location in locationInfo.MediaItemLocations)
                             {
-                                if (Directory.Exists(location.MediaItemPath))
+                                var mediaPath = location.MediaItemPath;
+
+                                if (!string.IsNullOrEmpty(options.PlexRootPath) && !string.IsNullOrEmpty(options.HostRootPath) && mediaPath.StartsWith(options.PlexRootPath))
                                 {
-                                    using StreamWriter sw = new StreamWriter($"{location.MediaItemPath}/{MediaConstants.PlexMatchFileName}", false);
+                                    mediaPath = mediaPath.Replace(options.PlexRootPath, options.HostRootPath);
+                                }
+
+                                if (Directory.Exists(mediaPath))
+                                {
+                                    using StreamWriter sw = new StreamWriter($"{mediaPath}/{MediaConstants.PlexMatchFileName}", false);
                                     sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
@@ -96,7 +103,7 @@ namespace PlexMatchGenerator.Services
                                 }
                                 else
                                 {
-                                    logger.LogError($"{MessageConstants.FolderMissingOrInvalid} {location.MediaItemPath}");
+                                    logger.LogError($"{MessageConstants.FolderMissingOrInvalid} {mediaPath}");
                                 }
                             }
                         }
