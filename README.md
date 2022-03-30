@@ -1,6 +1,11 @@
 # PlexMatch File Generator
 This application generates a .plexmatch file in the directory of all shows and movies added to your Plex Server. This is especially useful for migrating storage devices if you have some shows that needed a custom match.
 
+# Requirements
+The application needs access to the folders where your media is stored at the same path the Plex server uses to access them. If you are using a Docker container with a different path layout you can use a symbolic link to accomplish this on Linux:
+
+`ln -s /host/path /docker/path`
+
 # Usage
 The command is expecting 2 arguments from the command line, it will prompt for these values if you do not provide them
 - Plex Server Token (-t or --token)
