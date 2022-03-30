@@ -110,10 +110,17 @@ foreach (var library in libraries)
 
             foreach (var location in locationInfo.MediaItemLocations)
             {
-                using System.IO.StreamWriter sw = new System.IO.StreamWriter($"{location.MediaItemPath}/.plexmatch", false);
-                sw.WriteLine($"Title: {item.MediaItemTitle}");
-                sw.WriteLine($"Year: {item.MediaItemReleaseYear}");
-                sw.WriteLine($"Guid: {item.MediaItemPlexMatchGuid}");
+                if (Directory.Exists(location.MediaItemPath))
+                {
+                    using StreamWriter sw = new StreamWriter($"{location.MediaItemPath}/.plexmatch", false);
+                    sw.WriteLine($"Title: {item.MediaItemTitle}");
+                    sw.WriteLine($"Year: {item.MediaItemReleaseYear}");
+                    sw.WriteLine($"Guid: {item.MediaItemPlexMatchGuid}");
+                }
+                else
+                {
+                    Console.WriteLine($"Folder {location.MediaItemPath} does not exist.");
+                }
             }
         }
     }
