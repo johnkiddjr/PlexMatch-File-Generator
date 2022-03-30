@@ -8,6 +8,14 @@ The command is expecting 2 arguments from the command line, it will prompt for t
 
 For information on how to get your Plex token, see this support link: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
 
+## Optional Parameters
+- Modify root path (-r or --root)
+  - Use this option to set the root path used to be different than what your Plex server returns. For instance if your Plex container has the media mounted to /media and the computer running the application has it mounted to /mnt/media
+  - Usage: -r /path/on/host:/path/on/plex
+- Set log path (-l or --log)
+  - This will output the log to file at the path specified, log file will be named `plexmatch.log` in the directory specified. The path specified must exist! If this option is not specified, no log file will be output.
+  - Usage: -l /home/user/logs
+
 ## Examples
 
 `./PlexMatchGenerator-Linux-x64 -u http://192.168.0.3:32400 -t ABCD12345`
