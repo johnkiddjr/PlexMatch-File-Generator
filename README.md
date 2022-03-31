@@ -26,9 +26,15 @@ For information on how to get your Plex token, see this support link: https://su
 
 `PlexMatchGenerator-Windows-x86.exe --url http://192.168.0.3:32400 --token ABCD12345`
 
+# Donations
+Donations are always accepted but never required. Currently I accept PayPal using the button below.
+
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?business=XPYMV5XQG8JCN&no_recurring=0&currency_code=USD)
+
 # 3rd Party Packages Used
 - [RestSharp](https://restsharp.dev/)
 - [Newtonsoft.Json](https://www.newtonsoft.com/json)
+- [Serilog](https://serilog.net/)
 
 # Development Environment Setup
 - Clone repo
