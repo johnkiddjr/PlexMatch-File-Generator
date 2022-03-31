@@ -1,12 +1,8 @@
 ﻿// check for a paramter of the plex token, prompt if not present
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PlexMatchGenerator.Constants;
 using PlexMatchGenerator.Helpers;
-using PlexMatchGenerator.RestModels;
 using PlexMatchGenerator.Services;
-using RestSharp;
 using Serilog;
 using Serilog.Enrichers;
 
@@ -14,7 +10,7 @@ namespace PlexMatchGenerator
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var generatorOptions = ArgumentHelper.ProcessCommandLineArguments(args.ToList());
 
@@ -53,7 +49,8 @@ namespace PlexMatchGenerator
                 .Build();
 
             var svc = ActivatorUtilities.GetServiceOrCreateInstance<IGeneratorService>(host.Services);
-            svc.Run(generatorOptions);
+
+            return await svc.Run(generatorOptions);
         }
     }
 }

@@ -5,17 +5,12 @@ using PlexMatchGenerator.Helpers;
 using PlexMatchGenerator.Options;
 using PlexMatchGenerator.RestModels;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PlexMatchGenerator.Services
 {
     public interface IGeneratorService
     {
-        public int Run(GeneratorOptions options);
+        public Task<int> Run(GeneratorOptions options);
     }
 
     public class GeneratorService : IGeneratorService
@@ -27,7 +22,7 @@ namespace PlexMatchGenerator.Services
             this.logger = logger;
         }
 
-        public int Run(GeneratorOptions options)
+        public async Task<int> Run(GeneratorOptions options)
         {
             if (string.IsNullOrEmpty(options.PlexServerUrl))
             {
@@ -58,23 +53,40 @@ namespace PlexMatchGenerator.Services
             {
                 var client = RestClientHelper.GenerateClient(options.PlexServerUrl, options.PlexServerToken);
 
-                var libraries = RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiUrlConstants.LibrarySectionsRequestUrl, Method.Get)
-                    .LibraryContainer
-                    .Libraries;
+                var libraryRoot = await RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiUrlConstants.LibrarySectionsRequestUrl, Method.Get);
+
+                var libraries = libraryRoot?.LibraryContainer?.Libraries;
+
+                if (libraries is null)
+                {
+                    logger.LogError("No data or malformed data received from server when querying for libraries");
+                    return 1;
+                }
 
                 // step through the libraries and get a list of the items and their folders
                 foreach (var library in libraries)
                 {
-                    var items = RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiUrlConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiUrlConstants.SearchAll}", Method.Get)
-                        .MediaItemContainer
-                        .MediaItems;
+                    var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiUrlConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiUrlConstants.SearchAll}", Method.Get);
+
+                    var items = itemRoot?.MediaItemContainer?.MediaItems;
+
+                    if (items is null)
+                    {
+                        logger.LogError("Library {libraryName} of type {libraryType} with ID {libraryID} returned no items", library.LibraryName, library.LibraryType, library.LibraryId);
+                        continue;
+                    }
 
                     // step through each item in the library and get it's tvdbid and drop a .plexmatch file in it's root
                     foreach (var item in items)
                     {
-                        var locationInfos = RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiUrlConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get)
-                            .MediaItemInfoContainer
-                            .MediaItemInfos;
+                        var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiUrlConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
+
+                        var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
+
+                        if (locationInfos is null)
+                        {
+                            logger.LogError("Item with title {itemTitle} and ID {itemId} returned no location information", item.MediaItemTitle, item.MediaItemId);
+                        }
 
                         foreach (var locationInfo in locationInfos)
                         {

@@ -15,14 +15,12 @@ namespace PlexMatchGenerator.Helpers
             return client;
         }
 
-        public static T CreateAndGetRestResponse<T>(RestClient client, string resource, Method method)
+        public static async Task<T> CreateAndGetRestResponse<T>(RestClient client, string resource, Method method)
         {
             var request = new RestRequest(resource, method);
-            var response = client.ExecuteGetAsync<T>(request);
+            var response = await client.ExecuteGetAsync<T>(request);
 
-            response.Wait(5000);
-
-            return response.Result.Data;
+            return response.Data;
         }
     }
 }
