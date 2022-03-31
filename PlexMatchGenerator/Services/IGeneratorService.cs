@@ -86,7 +86,10 @@ namespace PlexMatchGenerator.Services
 
                                 possibleMediaLocations.ForEach(pml =>
                                 {
-                                    pml.MediaItemPath = pml.MediaItemPath.Substring(0, pml.MediaItemPath.LastIndexOf('/'));
+                                    var lastForwardSlash = pml.MediaItemPath.LastIndexOf("/");
+                                    var lastBackwardSlash = pml.MediaItemPath.LastIndexOf(@"\");
+
+                                    pml.MediaItemPath = pml.MediaItemPath.Substring(0, (lastBackwardSlash > lastForwardSlash) ? lastBackwardSlash : lastForwardSlash);
                                 });
                             }
                             else if ((library.LibraryType == "show" || library.LibraryType == "artist") && locationInfo.MediaItemLocations != null)
