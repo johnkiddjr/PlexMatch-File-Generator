@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PlexMatchGenerator.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,10 +25,25 @@ namespace PlexMatchGenerator.RestModels
     {
         [JsonProperty("Location")]
         public List<MediaItemLocation> MediaItemLocations { get; set; }
+        [JsonProperty("Media")]
+        public List<MediaInfo> MediaInfos { get; set; }
     }
-    public class MediaItemLocation
+
+    public class MediaItemLocation: IMediaPath
     {
         [JsonProperty("path")]
+        public string MediaItemPath { get; set; }
+    }
+
+    public class MediaInfo
+    {
+        [JsonProperty("Part")]
+        public List<MediaInfoPart> MediaParts { get; set; }
+    }
+
+    public class MediaInfoPart: IMediaPath
+    {
+        [JsonProperty("file")]
         public string MediaItemPath { get; set; }
     }
 }

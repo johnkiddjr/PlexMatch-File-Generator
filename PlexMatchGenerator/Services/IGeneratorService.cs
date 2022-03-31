@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using PlexMatchGenerator.Abstractions;
 using PlexMatchGenerator.Constants;
 using PlexMatchGenerator.Helpers;
 using PlexMatchGenerator.Options;
@@ -77,13 +78,28 @@ namespace PlexMatchGenerator.Services
 
                         foreach (var locationInfo in locationInfos)
                         {
-                            if (locationInfo.MediaItemLocations is null)
+                            List<IMediaPath> possibleMediaLocations = new List<IMediaPath>();
+
+                            if (library.LibraryType == "movie" && locationInfo.MediaInfos != null)
+                            {
+                                possibleMediaLocations = locationInfo.MediaInfos.SelectMany(mi => mi.MediaParts).Select(mp => (IMediaPath)mp).ToList();
+
+                                possibleMediaLocations.ForEach(pml =>
+                                {
+                                    pml.MediaItemPath = pml.MediaItemPath.Substring(0, pml.MediaItemPath.LastIndexOf('/'));
+                                });
+                            }
+                            else if ((library.LibraryType == "show" || library.LibraryType == "artist") && locationInfo.MediaItemLocations != null)
+                            {
+                                possibleMediaLocations = locationInfo.MediaItemLocations.Select(mil => (IMediaPath)mil).ToList();
+                            }
+                            else
                             {
                                 logger.LogWarning($"No media location found for: {item.MediaItemTitle}");
                                 continue;
                             }
 
-                            foreach (var location in locationInfo.MediaItemLocations)
+                            foreach (var location in possibleMediaLocations)
                             {
                                 var mediaPath = location.MediaItemPath;
 
