@@ -86,6 +86,7 @@ namespace PlexMatchGenerator.Services
                         if (locationInfos is null)
                         {
                             logger.LogError("Item with title {itemTitle} and ID {itemId} returned no location information", item.MediaItemTitle, item.MediaItemId);
+                            continue;
                         }
 
                         foreach (var locationInfo in locationInfos)
