@@ -119,9 +119,13 @@ namespace PlexMatchGenerator.Services
                             {
                                 var mediaPath = location.MediaItemPath;
 
-                                if (!string.IsNullOrEmpty(options.PlexRootPath) && !string.IsNullOrEmpty(options.HostRootPath) && mediaPath.StartsWith(options.PlexRootPath))
+                                foreach (var (plexRoot, hostRoot) in options.DirectoriesMapping)
                                 {
-                                    mediaPath = mediaPath.Replace(options.PlexRootPath, options.HostRootPath);
+                                    if (mediaPath.StartsWith(plexRoot))
+                                    {
+                                        mediaPath = mediaPath.Replace(plexRoot, hostRoot);
+                                        break; // only match once
+                                    }
                                 }
 
                                 if (Directory.Exists(mediaPath))

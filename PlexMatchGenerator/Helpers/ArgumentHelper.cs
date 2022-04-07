@@ -6,59 +6,78 @@ namespace PlexMatchGenerator.Helpers
     {
         public static GeneratorOptions ProcessCommandLineArguments(List<string> args)
         {
-            string plexUrl = string.Empty;
-            string plexToken = string.Empty;
-            string plexPath = string.Empty;
-            string hostPath = string.Empty;
-            string logPath = string.Empty;
-
-            if (args.Count > 1)
+            var options = new GeneratorOptions
             {
-                var urlArgument = args.Where(arg => arg == "--url" || arg == "-u").FirstOrDefault();
-                var tokenArgument = args.Where(arg => arg == "--token" || arg == "-t").FirstOrDefault();
-                var pathArgument = args.Where(arg => arg == "--root" || arg == "-r").FirstOrDefault();
-                var logArgument = args.Where(arg => arg == "--log" || arg == "-l").FirstOrDefault();
+                PlexServerUrl = string.Empty,
+                PlexServerToken = string.Empty,
+                LogPath = string.Empty,
+                DirectoriesMapping = new()
+            };
 
-                if (urlArgument != null)
+            var reader = new Queue<string>(args);
+
+            while (reader.Count > 0)
+            {
+                switch (reader.Dequeue())
                 {
-                    plexUrl = args[args.IndexOf(urlArgument) + 1];
-                }
+                    case "--url" or "-u":
+                        if (reader.Count > 0)
+                        {
+                            options.PlexServerUrl = reader.Dequeue();
+                        }
+                        break;
 
-                if (tokenArgument != null)
-                {
-                    plexToken = args[args.IndexOf(tokenArgument) + 1];
-                }
+                    case "--token" or "-t":
+                        if (reader.Count > 0)
+                        {
+                            options.PlexServerToken = reader.Dequeue();
+                        }
+                        break;
 
-                if (pathArgument != null)
-                {
-                    var rootPath = args[args.IndexOf(pathArgument) + 1].Split(':');
+                    case "--root" or "-r":
+                        TryReadOneRootArgs(); // ensure read one
+                        while (reader.Count > 0 && !reader.Peek().StartsWith("-"))
+                        {
+                            TryReadOneRootArgs(); // read more
+                        }
+                        break;
 
-                    if (rootPath.Length == 2)
-                    {
-                        hostPath = rootPath[0];
-                        plexPath = rootPath[1];
-                    }
-                }
-
-                if (logArgument != null)
-                {
-                    logPath = args[args.IndexOf(logArgument) + 1];
-
-                    if (!logPath.EndsWith("/"))
-                    {
-                        logPath += "/";
-                    }
+                    case "--log" or "-l":
+                        if (reader.Count > 0)
+                        {
+                            var logPath = reader.Dequeue();
+                            if (!logPath.EndsWith("/"))
+                            {
+                                logPath += "/";
+                            }
+                            options.LogPath = logPath;
+                        }
+                        break;
+                        
+                    default:
+                        break;
                 }
             }
 
-            return new GeneratorOptions
+            return options;
+
+            void TryReadOneRootArgs()
             {
-                PlexServerUrl = plexUrl,
-                PlexServerToken = plexToken,
-                LogPath = logPath,
-                HostRootPath = hostPath,
-                PlexRootPath = plexPath
-            };
+                if (reader.Count > 0)
+                {
+                    var rootPathArgs = reader.Dequeue().Split("::");
+
+                    if (rootPathArgs.Length == 2)
+                    {
+                        var hostPath = rootPathArgs[0];
+                        var plexPath = rootPathArgs[1];
+                        if (!string.IsNullOrEmpty(hostPath) && !string.IsNullOrEmpty(plexPath))
+                        {
+                            options.DirectoriesMapping[plexPath] = hostPath;
+                        }
+                    }
+                }
+            }
         }
 
         public static bool ValidatePlexUrl(string plexUrl)
