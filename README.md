@@ -11,7 +11,7 @@ For information on how to get your Plex token, see this support link: https://su
 ## Optional Parameters
 - Modify root path (-r or --root)
   - Use this option to set the root path used to be different than what your Plex server returns. For instance if your Plex container has the media mounted to /media and the computer running the application has it mounted to /mnt/media
-  - Usage: -r /path/on/host:/path/on/plex
+  - Usage: -r /path/on/host::/path/on/plex
 - Set log path (-l or --log)
   - This will output the log to file at the path specified, log file will be named `plexmatch.log` in the directory specified. The path specified must exist! If this option is not specified, no log file will be output.
   - Usage: -l /home/user/logs
