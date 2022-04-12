@@ -6,7 +6,6 @@ using PlexMatchGenerator.Options;
 using PlexMatchGenerator.Services;
 using Serilog;
 using Serilog.Enrichers;
-using System.CommandLine;
 
 namespace PlexMatchGenerator
 {

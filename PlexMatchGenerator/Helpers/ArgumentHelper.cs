@@ -1,7 +1,5 @@
 ﻿using PlexMatchGenerator.Constants;
 using PlexMatchGenerator.Options;
-using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Text.RegularExpressions;
 
 namespace PlexMatchGenerator.Helpers

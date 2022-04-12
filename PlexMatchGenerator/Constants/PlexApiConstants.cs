@@ -1,6 +1,6 @@
 ﻿namespace PlexMatchGenerator.Constants
 {
-    public class PlexApiUrlConstants
+    public class PlexApiConstants
     {
         public const string MetaDataRequestUrl = "library/metadata";
         public const string LibrarySectionsRequestUrl = "library/sections";

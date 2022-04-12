@@ -26,25 +26,25 @@ namespace PlexMatchGenerator.Services
         {
             if (string.IsNullOrEmpty(options.PlexServerToken))
             {
-                Console.WriteLine("Please enter your Plex Token: ");
+                Console.WriteLine(MessageConstants.EnterPlexToken);
                 options.PlexServerToken = Console.ReadLine();
             }
 
             if (!ArgumentHelper.ValidatePlexToken(options.PlexServerToken))
             {
-                logger.LogCritical("Plex Server Token must be valid and set");
+                logger.LogCritical(MessageConstants.TokenInvalid);
                 return 1;
             }
 
             if (string.IsNullOrEmpty(options.PlexServerUrl))
             {
-                Console.WriteLine("Please enter your Plex Server URL: ");
+                Console.WriteLine(MessageConstants.EnterPlexServerUrl);
                 options.PlexServerUrl = Console.ReadLine();
             }
 
             if (!ArgumentHelper.ValidatePlexUrl(options.PlexServerUrl))
             {
-                logger.LogCritical("Plex Server URL must be set, and must start with either http:// or https://");
+                logger.LogCritical(MessageConstants.UrlInvalid);
                 return 1;
             }
 
@@ -53,33 +53,33 @@ namespace PlexMatchGenerator.Services
             {
                 var client = RestClientHelper.GenerateClient(options.PlexServerUrl, options.PlexServerToken);
 
-                var libraryRoot = await RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiUrlConstants.LibrarySectionsRequestUrl, Method.Get);
+                var libraryRoot = await RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiConstants.LibrarySectionsRequestUrl, Method.Get);
 
                 var libraries = libraryRoot?.LibraryContainer?.Libraries;
 
                 if (libraries is null)
                 {
-                    logger.LogError("No data or malformed data received from server when querying for libraries");
+                    logger.LogError(MessageConstants.LibrariesNoResults);
                     return 1;
                 }
 
                 // step through the libraries and get a list of the items and their folders
                 foreach (var library in libraries)
                 {
-                    var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiUrlConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiUrlConstants.SearchAll}", Method.Get);
+                    var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiConstants.SearchAll}", Method.Get);
 
                     var items = itemRoot?.MediaItemContainer?.MediaItems;
 
                     if (items is null)
                     {
-                        logger.LogError("Library {libraryName} of type {libraryType} with ID {libraryID} returned no items", library.LibraryName, library.LibraryType, library.LibraryId);
+                        logger.LogError(MessageConstants.LibraryItemsNoResults, library.LibraryName, library.LibraryType, library.LibraryId);
                         continue;
                     }
 
                     // step through each item in the library and get it's tvdbid and drop a .plexmatch file in it's root
                     foreach (var item in items)
                     {
-                        var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiUrlConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
+                        var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
 
                         var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
 
@@ -93,7 +93,7 @@ namespace PlexMatchGenerator.Services
                         {
                             List<IMediaPath> possibleMediaLocations = new List<IMediaPath>();
 
-                            if (library.LibraryType == "movie" && locationInfo.MediaInfos != null)
+                            if (library.LibraryType == PlexApiConstants.MovieLibraryType && locationInfo.MediaInfos != null)
                             {
                                 possibleMediaLocations = locationInfo.MediaInfos.SelectMany(mi => mi.MediaParts).Select(mp => (IMediaPath)mp).ToList();
 
@@ -105,7 +105,7 @@ namespace PlexMatchGenerator.Services
                                     pml.MediaItemPath = pml.MediaItemPath.Substring(0, (lastBackwardSlash > lastForwardSlash) ? lastBackwardSlash : lastForwardSlash);
                                 });
                             }
-                            else if ((library.LibraryType == "show" || library.LibraryType == "artist") && locationInfo.MediaItemLocations != null)
+                            else if ((library.LibraryType == PlexApiConstants.TVLibraryType || library.LibraryType == PlexApiConstants.MusicLibraryType) && locationInfo.MediaItemLocations != null)
                             {
                                 possibleMediaLocations = locationInfo.MediaItemLocations.Select(mil => (IMediaPath)mil).ToList();
                             }
