@@ -8,32 +8,15 @@ namespace PlexMatchGenerator.Helpers
 {
     public class ArgumentHelper
     {
-        public static GeneratorOptions ProcessCommandLineParseResultsToGeneratorOptions(RootCommand rootCommand, CommandResult result)
+        public static GeneratorOptions ProcessCommandLineResults(string plexToken, string plexUrl, List<string> rootPaths, string logPath)
         {
-            var options = new GeneratorOptions();
-
-            foreach (var option in rootCommand.Options)
+            return new GeneratorOptions
             {
-                switch (option.Name)
-                {
-                    case "log":
-                        options.LogPath = result.GetValueForOption((Option<string>)option);
-                        break;
-                    case "root":
-                        options.RootPaths = GenerateRootPaths(result.GetValueForOption((Option<List<string>>)option));
-                        break;
-                    case "url":
-                        options.PlexServerUrl = result.GetValueForOption((Option<string>)option);
-                        break;
-                    case "token":
-                        options.PlexServerToken = result.GetValueForOption((Option<string>)option);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return options;
+                LogPath = logPath,
+                PlexServerUrl = plexUrl,
+                PlexServerToken = plexToken,
+                RootPaths = GenerateRootPaths(rootPaths)
+            };
         }
 
         private static List<RootPathOptions> GenerateRootPaths(List<string> rootMaps)

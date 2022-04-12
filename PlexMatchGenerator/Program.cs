@@ -13,17 +13,11 @@ namespace PlexMatchGenerator
     {
         static async Task<int> Main(string[] args)
         {
-            var rootCommand = CommandHelper.GenerateRootCommandHandler();
-            var result = rootCommand.Parse(args);
+            return await CommandHelper.GenerateRootCommandAndExecuteHandler(args, Run);
+        }
 
-            if (result.Errors.Any())
-            {
-                Console.WriteLine("Failed to process command line arguments");
-                return 1;
-            }
-
-            var generatorOptions = ArgumentHelper.ProcessCommandLineParseResultsToGeneratorOptions(rootCommand, result.CommandResult);
-
+        static async Task<int> Run(GeneratorOptions generatorOptions, string[] args)
+        {
             var startup = new Startup();
 
             if (string.IsNullOrEmpty(generatorOptions.LogPath))

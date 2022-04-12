@@ -24,27 +24,27 @@ namespace PlexMatchGenerator.Services
 
         public async Task<int> Run(GeneratorOptions options)
         {
-            if (string.IsNullOrEmpty(options.PlexServerUrl))
+            if (string.IsNullOrEmpty(options.PlexServerToken))
             {
                 Console.WriteLine("Please enter your Plex Token: ");
                 options.PlexServerToken = Console.ReadLine();
             }
 
-            if (!ArgumentHelper.ValidatePlexUrl(options.PlexServerUrl))
+            if (!ArgumentHelper.ValidatePlexToken(options.PlexServerToken))
             {
-                logger.LogCritical("Plex Server URL must be set, and must start with either http:// or https://");
+                logger.LogCritical("Plex Server Token must be valid and set");
                 return 1;
             }
 
-            if (string.IsNullOrEmpty(options.PlexServerToken))
+            if (string.IsNullOrEmpty(options.PlexServerUrl))
             {
                 Console.WriteLine("Please enter your Plex Server URL: ");
                 options.PlexServerUrl = Console.ReadLine();
             }
 
-            if (!ArgumentHelper.ValidatePlexToken(options.PlexServerToken))
+            if (!ArgumentHelper.ValidatePlexUrl(options.PlexServerUrl))
             {
-                logger.LogCritical("Plex Server Token must be set");
+                logger.LogCritical("Plex Server URL must be set, and must start with either http:// or https://");
                 return 1;
             }
 
@@ -85,7 +85,7 @@ namespace PlexMatchGenerator.Services
 
                         if (locationInfos is null)
                         {
-                            logger.LogError("Item with title {itemTitle} and ID {itemId} returned no location information", item.MediaItemTitle, item.MediaItemId);
+                            logger.LogError(MessageConstants.NoLocationInfoForItemFound, item.MediaItemTitle, item.MediaItemId);
                             continue;
                         }
 
@@ -111,7 +111,7 @@ namespace PlexMatchGenerator.Services
                             }
                             else
                             {
-                                logger.LogWarning($"No media location found for: {item.MediaItemTitle}");
+                                logger.LogWarning(MessageConstants.NoMediaFound, item.MediaItemTitle);
                                 continue;
                             }
 
@@ -119,10 +119,14 @@ namespace PlexMatchGenerator.Services
                             {
                                 var mediaPath = location.MediaItemPath;
 
-                                //if (!string.IsNullOrEmpty(options.PlexRootPath) && !string.IsNullOrEmpty(options.HostRootPath) && mediaPath.StartsWith(options.PlexRootPath))
-                                //{
-                                //    mediaPath = mediaPath.Replace(options.PlexRootPath, options.HostRootPath);
-                                //}
+                                foreach (var rootPath in options.RootPaths)
+                                {
+                                    if (mediaPath.StartsWith(rootPath.PlexRootPath))
+                                    {
+                                        mediaPath = mediaPath.Replace(rootPath.PlexRootPath, rootPath.HostRootPath);
+                                        break;
+                                    }
+                                }
 
                                 if (Directory.Exists(mediaPath))
                                 {
@@ -131,11 +135,11 @@ namespace PlexMatchGenerator.Services
                                     sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
 
-                                    logger.LogInformation($"{MessageConstants.PlexMatchWritten} {item.MediaItemTitle}");
+                                    logger.LogInformation(MessageConstants.PlexMatchWritten, item.MediaItemTitle);
                                 }
                                 else
                                 {
-                                    logger.LogError($"{MessageConstants.FolderMissingOrInvalid} {mediaPath}");
+                                    logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
                                 }
                             }
                         }
@@ -144,16 +148,16 @@ namespace PlexMatchGenerator.Services
             }
             catch (Exception ex)
             {
-                logger.LogError("An unhandeled exception occurred details below:");
-                logger.LogError("Exception Type: {exceptionType}", ex.GetType().ToString());
-                logger.LogError("Exception Message: {exceptionMessage}", ex.Message);
+                logger.LogError(MessageConstants.ExceptionHeaderMessage);
+                logger.LogError(MessageConstants.ExceptionTypeMessage, ex.GetType().ToString());
+                logger.LogError(MessageConstants.ExceptionMessageMessage, ex.Message);
                 if (ex.InnerException != null)
                 {
-                    logger.LogError("Inner Exception Type: {innerType}", ex.InnerException.GetType().ToString());
-                    logger.LogError("Inner Exception Message: {innerMessage}", ex.InnerException.Message);
+                    logger.LogError(MessageConstants.ExceptionInnerExceptionTypeMessage, ex.InnerException.GetType().ToString());
+                    logger.LogError(MessageConstants.ExceptionInnerExceptionMessageMessage, ex.InnerException.Message);
                 }
-                logger.LogError("Exception Source: {exceptionSource}", ex.Source);
-                logger.LogError("Exception Stack Trace: {stackTrace}", ex.StackTrace);
+                logger.LogError(MessageConstants.ExceptionSourceMessage, ex.Source);
+                logger.LogError(MessageConstants.ExceptionStackTraceMessage, ex.StackTrace);
 
                 return 1;
             }
