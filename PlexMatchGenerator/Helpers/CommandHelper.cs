@@ -1,4 +1,5 @@
-﻿using PlexMatchGenerator.Options;
+﻿using PlexMatchGenerator.Constants;
+using PlexMatchGenerator.Options;
 using System.CommandLine;
 
 namespace PlexMatchGenerator.Helpers
@@ -7,23 +8,65 @@ namespace PlexMatchGenerator.Helpers
     {
         public static async Task<int> GenerateRootCommandAndExecuteHandler(string[] args, Func<GeneratorOptions, string[], Task<int>> handler)
         {
-            var rootCommand = new RootCommand("PlexMatch File Generator - Generates .plexmatch files for existing library");
+            var rootCommand = new RootCommand(CommandConstants.RootDescription);
 
-            var tokenAliases = new string[] { "--token", "-t", "/token", "/t" };
-            var tokenDescription = "Plex Server Token more information on getting this at: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/";
-            var tokenOption = GenerateOption<string>(tokenAliases, tokenDescription, "Plex Server Token", "token", true);
+            var tokenAliases = new string[] 
+            {
+                CommandConstants.TokenCommandUnixLong,
+                CommandConstants.TokenCommandUnixShort,
+                CommandConstants.TokenCommandWindowsLong,
+                CommandConstants.TokenCommandWindowsShort
+            };
 
-            var urlAliases = new string[] { "--url", "-u", "/url", "/u" };
-            var urlDescription = "URL to access your Plex server. Must include the http or https portion";
-            var urlOption = GenerateOption<string>(urlAliases, urlDescription, "Plex Server URL", "url", true);
+            var tokenOption = GenerateOption<string>(
+                    tokenAliases,
+                    CommandConstants.TokenCommandDescription,
+                    CommandConstants.TokenCommandHelpName,
+                    CommandConstants.TokenCommandName,
+                    true);
 
-            var rootAliases = new string[] { "--root", "-r", "/root", "/r" };
-            var rootDescription = "Sets the root path used to be different than what your Plex server returns, this option can be set more than once";
-            var rootOption = GenerateOption<List<string>>(rootAliases, rootDescription, "Root Path Map", "root");
+            var urlAliases = new string[]
+            {
+                CommandConstants.UrlCommandUnixLong,
+                CommandConstants.UrlCommandUnixShort,
+                CommandConstants.UrlCommandWindowsLong,
+                CommandConstants.UrlCommandWindowsShort
+            };
 
-            var logAliases = new string[] { "--log", "-l", "/log", "/l" };
-            var logDescription = "Outputs the log to file at the path specified, log file will be named plexmatch.log in the directory specified";
-            var logOption = GenerateOption<string>(logAliases, logDescription, "Log Path", "log");
+            var urlOption = GenerateOption<string>(
+                urlAliases,
+                CommandConstants.UrlCommandDescription,
+                CommandConstants.UrlCommandHelpName,
+                CommandConstants.UrlCommandName,
+                true);
+
+            var rootAliases = new string[]
+            {
+                CommandConstants.RootPathCommandUnixLong,
+                CommandConstants.RootPathCommandUnixShort,
+                CommandConstants.RootPathCommandWindowsLong,
+                CommandConstants.RootPathCommandWindowsShort
+            };
+
+            var rootOption = GenerateOption<List<string>>(
+                rootAliases,
+                CommandConstants.RootPathCommandDescription,
+                CommandConstants.RootPathCommandHelpName,
+                CommandConstants.RootPathCommandName);
+
+            var logAliases = new string[]
+            {
+                CommandConstants.LogPathCommandUnixLong,
+                CommandConstants.LogPathCommandUnixShort,
+                CommandConstants.LogPathCommandWindowsLong,
+                CommandConstants.LogPathCommandWindowsShort
+            };
+
+            var logOption = GenerateOption<string>(
+                logAliases,
+                CommandConstants.LogPathCommandDescription,
+                CommandConstants.LogPathCommandHelpName,
+                CommandConstants.LogPathCommandName);
 
             rootCommand.AddOption(tokenOption);
             rootCommand.AddOption(urlOption);

@@ -68,7 +68,7 @@ namespace PlexMatchGenerator.Helpers
                 plexUrl += "/";
             }
 
-            return plexUrl.StartsWith("http://") || plexUrl.StartsWith("https://");
+            return plexUrl.StartsWith(HttpConstants.UnsecureProtocol) || plexUrl.StartsWith(HttpConstants.SecureProtocol);
         }
 
         // This stub exists for potential future expansion only

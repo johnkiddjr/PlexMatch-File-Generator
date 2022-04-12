@@ -1,4 +1,5 @@
-﻿using RestSharp;
+﻿using PlexMatchGenerator.Constants;
+using RestSharp;
 using RestSharp.Serializers.NewtonsoftJson;
 
 namespace PlexMatchGenerator.Helpers
@@ -9,8 +10,8 @@ namespace PlexMatchGenerator.Helpers
         {
             var client = new RestClient(plexUrl);
             client.UseNewtonsoftJson();
-            client.AddDefaultHeader("Accept", "application/json");
-            client.AddDefaultHeader("X-Plex-Token", plexToken);
+            client.AddDefaultHeader(KnownHeaders.Accept, HttpConstants.ApplicationJson);
+            client.AddDefaultHeader(HttpConstants.PlexTokenHeaderName, plexToken);
 
             return client;
         }

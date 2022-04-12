@@ -8,6 +8,7 @@
         public const string PlexMatchWritten = ".plexmatch file written successfully for: {mediaTitle}";
         public const string NoMediaFound = "No media location found for: {mediaItemTitle}";
         public const string NoLocationInfoForItemFound = "Item with title {itemTitle} and ID {itemId} returned no location information";
+        public const string LoggerAttachedMessage = "Logger attached. Startup complete. Running file generator...";
 
         //exception messages
         public const string ExceptionHeaderMessage = "An unhandeled exception occurred details below:";
