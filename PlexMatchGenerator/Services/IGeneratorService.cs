@@ -119,10 +119,10 @@ namespace PlexMatchGenerator.Services
                             {
                                 var mediaPath = location.MediaItemPath;
 
-                                if (!string.IsNullOrEmpty(options.PlexRootPath) && !string.IsNullOrEmpty(options.HostRootPath) && mediaPath.StartsWith(options.PlexRootPath))
-                                {
-                                    mediaPath = mediaPath.Replace(options.PlexRootPath, options.HostRootPath);
-                                }
+                                //if (!string.IsNullOrEmpty(options.PlexRootPath) && !string.IsNullOrEmpty(options.HostRootPath) && mediaPath.StartsWith(options.PlexRootPath))
+                                //{
+                                //    mediaPath = mediaPath.Replace(options.PlexRootPath, options.HostRootPath);
+                                //}
 
                                 if (Directory.Exists(mediaPath))
                                 {

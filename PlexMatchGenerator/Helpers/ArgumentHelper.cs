@@ -1,64 +1,81 @@
-﻿using PlexMatchGenerator.Options;
+﻿using PlexMatchGenerator.Constants;
+using PlexMatchGenerator.Options;
+using System.CommandLine;
+using System.CommandLine.Parsing;
+using System.Text.RegularExpressions;
 
 namespace PlexMatchGenerator.Helpers
 {
     public class ArgumentHelper
     {
-        public static GeneratorOptions ProcessCommandLineArguments(List<string> args)
+        public static GeneratorOptions ProcessCommandLineParseResultsToGeneratorOptions(RootCommand rootCommand, CommandResult result)
         {
-            string plexUrl = string.Empty;
-            string plexToken = string.Empty;
-            string plexPath = string.Empty;
-            string hostPath = string.Empty;
-            string logPath = string.Empty;
+            var options = new GeneratorOptions();
 
-            if (args.Count > 1)
+            foreach (var option in rootCommand.Options)
             {
-                var urlArgument = args.Where(arg => arg == "--url" || arg == "-u").FirstOrDefault();
-                var tokenArgument = args.Where(arg => arg == "--token" || arg == "-t").FirstOrDefault();
-                var pathArgument = args.Where(arg => arg == "--root" || arg == "-r").FirstOrDefault();
-                var logArgument = args.Where(arg => arg == "--log" || arg == "-l").FirstOrDefault();
-
-                if (urlArgument != null)
+                switch (option.Name)
                 {
-                    plexUrl = args[args.IndexOf(urlArgument) + 1];
-                }
-
-                if (tokenArgument != null)
-                {
-                    plexToken = args[args.IndexOf(tokenArgument) + 1];
-                }
-
-                if (pathArgument != null)
-                {
-                    var rootPath = args[args.IndexOf(pathArgument) + 1].Split(':');
-
-                    if (rootPath.Length == 2)
-                    {
-                        hostPath = rootPath[0];
-                        plexPath = rootPath[1];
-                    }
-                }
-
-                if (logArgument != null)
-                {
-                    logPath = args[args.IndexOf(logArgument) + 1];
-
-                    if (!logPath.EndsWith("/"))
-                    {
-                        logPath += "/";
-                    }
+                    case "log":
+                        options.LogPath = result.GetValueForOption((Option<string>)option);
+                        break;
+                    case "root":
+                        options.RootPaths = GenerateRootPaths(result.GetValueForOption((Option<List<string>>)option));
+                        break;
+                    case "url":
+                        options.PlexServerUrl = result.GetValueForOption((Option<string>)option);
+                        break;
+                    case "token":
+                        options.PlexServerToken = result.GetValueForOption((Option<string>)option);
+                        break;
+                    default:
+                        break;
                 }
             }
 
-            return new GeneratorOptions
+            return options;
+        }
+
+        private static List<RootPathOptions> GenerateRootPaths(List<string> rootMaps)
+        {
+            if (!rootMaps.Any())
             {
-                PlexServerUrl = plexUrl,
-                PlexServerToken = plexToken,
-                LogPath = logPath,
-                HostRootPath = hostPath,
-                PlexRootPath = plexPath
-            };
+                return null;
+            }
+
+            var rootPathMaps = new List<RootPathOptions>();
+            
+            foreach (var rootMap in rootMaps)
+            {
+                var pathMatches = Regex.Matches(rootMap, RegexConstants.RootPathMatchPattern);
+
+                if (pathMatches.Count > 1)
+                {
+                    var newRootPath = new RootPathOptions();
+
+                    foreach (Match match in pathMatches)
+                    {
+                        if (string.IsNullOrWhiteSpace(match.Value))
+                        {
+                            continue;
+                        }
+
+                        if (string.IsNullOrWhiteSpace(newRootPath.HostRootPath))
+                        {
+                            newRootPath.HostRootPath = match.Value;
+                        }
+                        else
+                        {
+                            newRootPath.PlexRootPath = match.Value;
+                            break;
+                        }
+                    }
+
+                    rootPathMaps.Add(newRootPath);
+                }
+            }
+
+            return rootPathMaps;
         }
 
         public static bool ValidatePlexUrl(string plexUrl)

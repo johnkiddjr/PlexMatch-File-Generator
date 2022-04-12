@@ -1,10 +1,11 @@
-﻿// check for a paramter of the plex token, prompt if not present
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PlexMatchGenerator.Helpers;
+using PlexMatchGenerator.Options;
 using PlexMatchGenerator.Services;
 using Serilog;
 using Serilog.Enrichers;
+using System.CommandLine;
 
 namespace PlexMatchGenerator
 {
@@ -12,7 +13,16 @@ namespace PlexMatchGenerator
     {
         static async Task<int> Main(string[] args)
         {
-            var generatorOptions = ArgumentHelper.ProcessCommandLineArguments(args.ToList());
+            var rootCommand = CommandHelper.GenerateRootCommandHandler();
+            var result = rootCommand.Parse(args);
+
+            if (result.Errors.Any())
+            {
+                Console.WriteLine("Failed to process command line arguments");
+                return 1;
+            }
+
+            var generatorOptions = ArgumentHelper.ProcessCommandLineParseResultsToGeneratorOptions(rootCommand, result.CommandResult);
 
             var startup = new Startup();
 
