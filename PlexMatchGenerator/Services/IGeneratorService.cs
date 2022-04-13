@@ -24,27 +24,27 @@ namespace PlexMatchGenerator.Services
 
         public async Task<int> Run(GeneratorOptions options)
         {
-            if (string.IsNullOrEmpty(options.PlexServerUrl))
-            {
-                Console.WriteLine("Please enter your Plex Token: ");
-                options.PlexServerToken = Console.ReadLine();
-            }
-
-            if (!ArgumentHelper.ValidatePlexUrl(options.PlexServerUrl))
-            {
-                logger.LogCritical("Plex Server URL must be set, and must start with either http:// or https://");
-                return 1;
-            }
-
             if (string.IsNullOrEmpty(options.PlexServerToken))
             {
-                Console.WriteLine("Please enter your Plex Server URL: ");
-                options.PlexServerUrl = Console.ReadLine();
+                Console.WriteLine(MessageConstants.EnterPlexToken);
+                options.PlexServerToken = Console.ReadLine();
             }
 
             if (!ArgumentHelper.ValidatePlexToken(options.PlexServerToken))
             {
-                logger.LogCritical("Plex Server Token must be set");
+                logger.LogCritical(MessageConstants.TokenInvalid);
+                return 1;
+            }
+
+            if (string.IsNullOrEmpty(options.PlexServerUrl))
+            {
+                Console.WriteLine(MessageConstants.EnterPlexServerUrl);
+                options.PlexServerUrl = Console.ReadLine();
+            }
+
+            if (!ArgumentHelper.ValidatePlexUrl(options.PlexServerUrl))
+            {
+                logger.LogCritical(MessageConstants.UrlInvalid);
                 return 1;
             }
 
@@ -53,39 +53,39 @@ namespace PlexMatchGenerator.Services
             {
                 var client = RestClientHelper.GenerateClient(options.PlexServerUrl, options.PlexServerToken);
 
-                var libraryRoot = await RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiUrlConstants.LibrarySectionsRequestUrl, Method.Get);
+                var libraryRoot = await RestClientHelper.CreateAndGetRestResponse<LibraryRoot>(client, PlexApiConstants.LibrarySectionsRequestUrl, Method.Get);
 
                 var libraries = libraryRoot?.LibraryContainer?.Libraries;
 
                 if (libraries is null)
                 {
-                    logger.LogError("No data or malformed data received from server when querying for libraries");
+                    logger.LogError(MessageConstants.LibrariesNoResults);
                     return 1;
                 }
 
                 // step through the libraries and get a list of the items and their folders
                 foreach (var library in libraries)
                 {
-                    var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiUrlConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiUrlConstants.SearchAll}", Method.Get);
+                    var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiConstants.SearchAll}", Method.Get);
 
                     var items = itemRoot?.MediaItemContainer?.MediaItems;
 
                     if (items is null)
                     {
-                        logger.LogError("Library {libraryName} of type {libraryType} with ID {libraryID} returned no items", library.LibraryName, library.LibraryType, library.LibraryId);
+                        logger.LogError(MessageConstants.LibraryItemsNoResults, library.LibraryName, library.LibraryType, library.LibraryId);
                         continue;
                     }
 
                     // step through each item in the library and get it's tvdbid and drop a .plexmatch file in it's root
                     foreach (var item in items)
                     {
-                        var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiUrlConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
+                        var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
 
                         var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
 
                         if (locationInfos is null)
                         {
-                            logger.LogError("Item with title {itemTitle} and ID {itemId} returned no location information", item.MediaItemTitle, item.MediaItemId);
+                            logger.LogError(MessageConstants.NoLocationInfoForItemFound, item.MediaItemTitle, item.MediaItemId);
                             continue;
                         }
 
@@ -93,7 +93,7 @@ namespace PlexMatchGenerator.Services
                         {
                             List<IMediaPath> possibleMediaLocations = new List<IMediaPath>();
 
-                            if (library.LibraryType == "movie" && locationInfo.MediaInfos != null)
+                            if (library.LibraryType == PlexApiConstants.MovieLibraryType && locationInfo.MediaInfos != null)
                             {
                                 possibleMediaLocations = locationInfo.MediaInfos.SelectMany(mi => mi.MediaParts).Select(mp => (IMediaPath)mp).ToList();
 
@@ -105,13 +105,13 @@ namespace PlexMatchGenerator.Services
                                     pml.MediaItemPath = pml.MediaItemPath.Substring(0, (lastBackwardSlash > lastForwardSlash) ? lastBackwardSlash : lastForwardSlash);
                                 });
                             }
-                            else if ((library.LibraryType == "show" || library.LibraryType == "artist") && locationInfo.MediaItemLocations != null)
+                            else if ((library.LibraryType == PlexApiConstants.TVLibraryType || library.LibraryType == PlexApiConstants.MusicLibraryType) && locationInfo.MediaItemLocations != null)
                             {
                                 possibleMediaLocations = locationInfo.MediaItemLocations.Select(mil => (IMediaPath)mil).ToList();
                             }
                             else
                             {
-                                logger.LogWarning($"No media location found for: {item.MediaItemTitle}");
+                                logger.LogWarning(MessageConstants.NoMediaFound, item.MediaItemTitle);
                                 continue;
                             }
 
@@ -119,23 +119,27 @@ namespace PlexMatchGenerator.Services
                             {
                                 var mediaPath = location.MediaItemPath;
 
-                                if (!string.IsNullOrEmpty(options.PlexRootPath) && !string.IsNullOrEmpty(options.HostRootPath) && mediaPath.StartsWith(options.PlexRootPath))
+                                foreach (var rootPath in options.RootPaths)
                                 {
-                                    mediaPath = mediaPath.Replace(options.PlexRootPath, options.HostRootPath);
+                                    if (mediaPath.StartsWith(rootPath.PlexRootPath))
+                                    {
+                                        mediaPath = mediaPath.Replace(rootPath.PlexRootPath, rootPath.HostRootPath);
+                                        break;
+                                    }
                                 }
 
                                 if (Directory.Exists(mediaPath))
                                 {
-                                    using StreamWriter sw = new StreamWriter($"{mediaPath}/{MediaConstants.PlexMatchFileName}", false);
+                                    using StreamWriter sw = new StreamWriter($"{mediaPath}/{FileConstants.PlexMatchFileName}", false);
                                     sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
 
-                                    logger.LogInformation($"{MessageConstants.PlexMatchWritten} {item.MediaItemTitle}");
+                                    logger.LogInformation(MessageConstants.PlexMatchWritten, item.MediaItemTitle);
                                 }
                                 else
                                 {
-                                    logger.LogError($"{MessageConstants.FolderMissingOrInvalid} {mediaPath}");
+                                    logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
                                 }
                             }
                         }
@@ -144,16 +148,16 @@ namespace PlexMatchGenerator.Services
             }
             catch (Exception ex)
             {
-                logger.LogError("An unhandeled exception occurred details below:");
-                logger.LogError("Exception Type: {exceptionType}", ex.GetType().ToString());
-                logger.LogError("Exception Message: {exceptionMessage}", ex.Message);
+                logger.LogError(MessageConstants.ExceptionHeaderMessage);
+                logger.LogError(MessageConstants.ExceptionTypeMessage, ex.GetType().ToString());
+                logger.LogError(MessageConstants.ExceptionMessageMessage, ex.Message);
                 if (ex.InnerException != null)
                 {
-                    logger.LogError("Inner Exception Type: {innerType}", ex.InnerException.GetType().ToString());
-                    logger.LogError("Inner Exception Message: {innerMessage}", ex.InnerException.Message);
+                    logger.LogError(MessageConstants.ExceptionInnerExceptionTypeMessage, ex.InnerException.GetType().ToString());
+                    logger.LogError(MessageConstants.ExceptionInnerExceptionMessageMessage, ex.InnerException.Message);
                 }
-                logger.LogError("Exception Source: {exceptionSource}", ex.Source);
-                logger.LogError("Exception Stack Trace: {stackTrace}", ex.StackTrace);
+                logger.LogError(MessageConstants.ExceptionSourceMessage, ex.Source);
+                logger.LogError(MessageConstants.ExceptionStackTraceMessage, ex.StackTrace);
 
                 return 1;
             }

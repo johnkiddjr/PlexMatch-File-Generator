@@ -4,8 +4,7 @@
     {
         public string PlexServerUrl { get; set; }
         public string PlexServerToken { get; set; }
-        public string HostRootPath { get; set; }
-        public string PlexRootPath { get; set; }
+        public IEnumerable<RootPathOptions> RootPaths { get; set; }
         public string LogPath { get; set; }
     }
 }

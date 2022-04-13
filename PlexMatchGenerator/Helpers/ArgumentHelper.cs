@@ -1,64 +1,62 @@
-﻿using PlexMatchGenerator.Options;
+﻿using PlexMatchGenerator.Constants;
+using PlexMatchGenerator.Options;
+using System.Text.RegularExpressions;
 
 namespace PlexMatchGenerator.Helpers
 {
     public class ArgumentHelper
     {
-        public static GeneratorOptions ProcessCommandLineArguments(List<string> args)
+        public static GeneratorOptions ProcessCommandLineResults(string plexToken, string plexUrl, List<string> rootPaths, string logPath)
         {
-            string plexUrl = string.Empty;
-            string plexToken = string.Empty;
-            string plexPath = string.Empty;
-            string hostPath = string.Empty;
-            string logPath = string.Empty;
-
-            if (args.Count > 1)
+            return new GeneratorOptions
             {
-                var urlArgument = args.Where(arg => arg == "--url" || arg == "-u").FirstOrDefault();
-                var tokenArgument = args.Where(arg => arg == "--token" || arg == "-t").FirstOrDefault();
-                var pathArgument = args.Where(arg => arg == "--root" || arg == "-r").FirstOrDefault();
-                var logArgument = args.Where(arg => arg == "--log" || arg == "-l").FirstOrDefault();
+                LogPath = logPath,
+                PlexServerUrl = plexUrl,
+                PlexServerToken = plexToken,
+                RootPaths = GenerateRootPaths(rootPaths)
+            };
+        }
 
-                if (urlArgument != null)
+        private static List<RootPathOptions> GenerateRootPaths(List<string> rootMaps)
+        {
+            if (!rootMaps.Any())
+            {
+                return null;
+            }
+
+            var rootPathMaps = new List<RootPathOptions>();
+            
+            foreach (var rootMap in rootMaps)
+            {
+                var pathMatches = Regex.Matches(rootMap, RegexConstants.RootPathMatchPattern);
+
+                if (pathMatches.Count > 1)
                 {
-                    plexUrl = args[args.IndexOf(urlArgument) + 1];
-                }
+                    var newRootPath = new RootPathOptions();
 
-                if (tokenArgument != null)
-                {
-                    plexToken = args[args.IndexOf(tokenArgument) + 1];
-                }
-
-                if (pathArgument != null)
-                {
-                    var rootPath = args[args.IndexOf(pathArgument) + 1].Split(':');
-
-                    if (rootPath.Length == 2)
+                    foreach (Match match in pathMatches)
                     {
-                        hostPath = rootPath[0];
-                        plexPath = rootPath[1];
-                    }
-                }
+                        if (string.IsNullOrWhiteSpace(match.Value))
+                        {
+                            continue;
+                        }
 
-                if (logArgument != null)
-                {
-                    logPath = args[args.IndexOf(logArgument) + 1];
-
-                    if (!logPath.EndsWith("/"))
-                    {
-                        logPath += "/";
+                        if (string.IsNullOrWhiteSpace(newRootPath.HostRootPath))
+                        {
+                            newRootPath.HostRootPath = match.Value;
+                        }
+                        else
+                        {
+                            newRootPath.PlexRootPath = match.Value;
+                            break;
+                        }
                     }
+
+                    rootPathMaps.Add(newRootPath);
                 }
             }
 
-            return new GeneratorOptions
-            {
-                PlexServerUrl = plexUrl,
-                PlexServerToken = plexToken,
-                LogPath = logPath,
-                HostRootPath = hostPath,
-                PlexRootPath = plexPath
-            };
+            return rootPathMaps;
         }
 
         public static bool ValidatePlexUrl(string plexUrl)
@@ -68,7 +66,7 @@ namespace PlexMatchGenerator.Helpers
                 plexUrl += "/";
             }
 
-            return plexUrl.StartsWith("http://") || plexUrl.StartsWith("https://");
+            return plexUrl.StartsWith(HttpConstants.UnsecureProtocol) || plexUrl.StartsWith(HttpConstants.SecureProtocol);
         }
 
         // This stub exists for potential future expansion only
