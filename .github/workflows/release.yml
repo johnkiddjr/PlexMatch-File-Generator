@@ -15,16 +15,26 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.x
-      # - name: Restore Dependencies
-      #   run: dotnet restore
-      # - name: Build
-      #   run: dotnet build --no-restore
       - name: get version tag
         run: echo "VTAG=$(echo ${GITHUB_REF:11})" >> $GITHUB_ENV
+      - name: Restore Dependencies
+        run: dotnet restore
       - name: build
-        run: dotnet build -c Release
-      - name: publish Windows artifacts
+        run: dotnet build -c Release --no-restore
+      - name: publish Windows version
         run: dotnet publish -c Release -o ./publish -r win-x86 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+      - name: rename Windows executable
+        run: mv ./publish/PlexMatchGenerator.exe ./publish/PlexMatchGenerator-Windows-x86.exe
+      - name: publish Linux version
+        run: dotnet publish -c Release -o ./publish -r linux-x64 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+      - name: rename Linux executable
+        run: mv ./publish/PlexMatchGenerator ./publish/PlexMatchGenerator-Linux-x64
+      - name: publish Mac version
+        run: dotnet publish -c Release -o ./publish -r osx-x64 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+      - name: rename Mac OSX executable
+        run: mv ./publish/PlexMatchGenerator ./publish/PlexMatchGenerator-MacOSX-x64
+      - name: remove debug artifacts
+        run: rm ./publish/*.pdb -fr
       - name: upload artifacts
         uses: actions/upload-artifact@v3
         with:
