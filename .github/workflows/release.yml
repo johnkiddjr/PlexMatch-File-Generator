@@ -15,7 +15,9 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.x
-      - name: Restore Dependencies
-        run: dotnet restore
-      - name: Build
-        run: dotnet build --no-restore
+      # - name: Restore Dependencies
+      #   run: dotnet restore
+      # - name: Build
+      #   run: dotnet build --no-restore
+      - name: test echo tag
+        run: echo "VERSION=$(echo ${GITHUB_REF:10})"
