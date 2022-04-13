@@ -26,7 +26,7 @@ jobs:
       - name: publish Windows artifacts
         run: dotnet publish -c Release -o ./publish -r win-x86 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
       - name: upload artifacts
-        uses: actions/upload-artifacts@v2
+        uses: actions/upload-artifact@v3
         with:
           name: test
           path: ./publish
