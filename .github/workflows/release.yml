@@ -20,4 +20,4 @@ jobs:
       # - name: Build
       #   run: dotnet build --no-restore
       - name: test echo tag
-        run: echo "VERSION=$(echo ${GITHUB_REF:10})"
+        run: echo "VERSION=$(echo ${${GITHUB_REF:10}:1:-1})"
