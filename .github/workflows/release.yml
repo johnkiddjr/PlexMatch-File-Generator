@@ -19,8 +19,9 @@ jobs:
       #   run: dotnet restore
       # - name: Build
       #   run: dotnet build --no-restore
-      - name: test echo tag
-        run: VTAG=$(echo ${GITHUB_REF:10})
-      - name: fix leading v
-        run: VERSION=${VTAG:1:-1} && echo $VERSION
-      
+      - name: get version tag
+        run: echo "VTAG=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+      - name: remove leading v
+        run: echo "VERSION=${VTAG:1:-1} && echo $VERSION"
+      - name: echo VERSION
+        run: echo $VERSION
