@@ -20,4 +20,13 @@ jobs:
       # - name: Build
       #   run: dotnet build --no-restore
       - name: get version tag
-        run: echo "VTAG=$(echo ${GITHUB_REF:11})"
+        run: echo "VTAG=$(echo ${GITHUB_REF:11})" >> $GITHUB_ENV
+      - name: build
+        run: dotnet build -c Release
+      - name: publish Windows artifacts
+        run: dotnet publish -c Release -o ./publish -r win-x86 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+      - name: upload artifacts
+        uses: actions/upload-artifacts@v2
+        with:
+          name: test
+          path: ./publish
