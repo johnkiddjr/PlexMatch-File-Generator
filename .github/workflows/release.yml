@@ -15,22 +15,24 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.x
+      - name: get tag
+        run: echo "VTAG=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
       - name: get version tag
-        run: echo "VTAG=$(echo ${GITHUB_REF:11})" >> $GITHUB_ENV
+        run: echo "VERSION=$(echo ${GITHUB_REF:11})" >> $GITHUB_ENV
       - name: Restore Dependencies
         run: dotnet restore
       - name: build
         run: dotnet build -c Release --no-restore
       - name: publish Windows version
-        run: dotnet publish -c Release -o ./publish -r win-x86 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+        run: dotnet publish -c Release -o ./publish -r win-x86 -p:Version="${{env.VERSION}}" -p:PublishSingleFile=true --self-contained
       - name: rename Windows executable
         run: mv ./publish/PlexMatchGenerator.exe ./publish/PlexMatchGenerator-Windows-x86.exe
       - name: publish Linux version
-        run: dotnet publish -c Release -o ./publish -r linux-x64 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+        run: dotnet publish -c Release -o ./publish -r linux-x64 -p:Version="${{env.VERSION}}" -p:PublishSingleFile=true --self-contained
       - name: rename Linux executable
         run: mv ./publish/PlexMatchGenerator ./publish/PlexMatchGenerator-Linux-x64
       - name: publish Mac version
-        run: dotnet publish -c Release -o ./publish -r osx-x64 -p:Version="${{env.VTAG}}" -p:PublishSingleFile=true --self-contained
+        run: dotnet publish -c Release -o ./publish -r osx-x64 -p:Version="${{env.VERSION}}" -p:PublishSingleFile=true --self-contained
       - name: rename Mac OSX executable
         run: mv ./publish/PlexMatchGenerator ./publish/PlexMatchGenerator-MacOSX-x64
       - name: remove debug artifacts
@@ -38,5 +40,43 @@ jobs:
       - name: upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: test
+          name: publish_artifacts
           path: ./publish
+      - name: create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ env.VTAG }}
+          body_path: ./.github/workflows/ReleaseNotes.md
+          draft: false
+          prerelease: false
+      - name: upload linux artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish/PlexMatchGenerator-Linux-x64
+          asset_name: PlexMatchGenerator-Linux-x64
+          asset_content_type: application/octet-stream
+      - name: upload windows artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish/PlexMatchGenerator-Windows-x86.exe
+          asset_name: PlexMatchGenerator-Windows-x86.exe
+          asset_content_type: application/octet-stream
+      - name: upload osx artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish/PlexMatchGenerator-MacOSX-x64
+          asset_name: PlexMatchGenerator-MacOSX-x64
+          asset_content_type: application/octet-stream
