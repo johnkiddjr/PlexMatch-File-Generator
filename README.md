@@ -2,7 +2,7 @@
 This application generates a .plexmatch file in the directory of all shows and movies added to your Plex Server. This is especially useful for migrating storage devices if you have some shows that needed a custom match.
 
 # Usage
-The command is expecting 2 arguments from the command line, it will prompt for these values if you do not provide them
+The command is expecting 2 arguments from the command line
 - Plex Server Token (-t or --token)
 - Plex Server Url (-u or --url)
 
@@ -15,6 +15,10 @@ For information on how to get your Plex token, see this support link: https://su
 - Set log path (-l or --log)
   - This will output the log to file at the path specified, log file will be named `plexmatch.log` in the directory specified. The path specified must exist! If this option is not specified, no log file will be output.
   - Usage: -l /home/user/logs
+- Get version (--version)
+  - This will output the version of the executable being run
+- View help (--help)
+  - This will output the parameter help
 
 ## Examples
 
@@ -48,4 +52,5 @@ Contributions are welcome!
 - Fork the repo
 - Make your change
 - Submit a Pull Request, Ensure to include details of what problem is fixed, what is improved, etc. If it is in response to an issue, tag the issue on the PR
+- Submit your PR to merge into the Develop branch, merge requests to the main branch will be denied
 - Respond to and/or make changes based on PR comments
