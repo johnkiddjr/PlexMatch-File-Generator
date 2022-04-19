@@ -126,7 +126,7 @@ namespace PlexMatchGenerator.Services
                                         mediaPath = mediaPath.Replace(rootPath.PlexRootPath, rootPath.HostRootPath);
                                         break;
                                     }
-                                }
+                                }                                
 
                                 if (Directory.Exists(mediaPath))
                                 {
