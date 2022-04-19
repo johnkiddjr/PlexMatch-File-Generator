@@ -8,6 +8,15 @@ namespace PlexMatchGenerator.Helpers
     {
         public static GeneratorOptions ProcessCommandLineResults(string plexToken, string plexUrl, List<string> rootPaths, string logPath)
         {
+            //ensure we end the path with a slash
+            if (!logPath.EndsWith("\\") && !logPath.EndsWith('/'))
+            {
+                //make sure we use the correct slash if we need to use it
+                bool useBackslash = logPath.Count(x => x.Equals('\\')) > logPath.Count(x => x.Equals('/'));
+
+                logPath += useBackslash ? "\\" : "/";
+            }
+
             return new GeneratorOptions
             {
                 LogPath = logPath,
@@ -21,7 +30,7 @@ namespace PlexMatchGenerator.Helpers
         {
             if (!rootMaps.Any())
             {
-                return null;
+                return new List<RootPathOptions>();
             }
 
             var rootPathMaps = new List<RootPathOptions>();
