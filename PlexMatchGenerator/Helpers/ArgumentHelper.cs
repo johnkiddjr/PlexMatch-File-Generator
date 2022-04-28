@@ -9,7 +9,7 @@ namespace PlexMatchGenerator.Helpers
         public static GeneratorOptions ProcessCommandLineResults(string plexToken, string plexUrl, List<string> rootPaths, string logPath)
         {
             //ensure we end the path with a slash
-            if (!logPath.EndsWith("\\") && !logPath.EndsWith('/'))
+            if (logPath != null && !logPath.EndsWith("\\") && !logPath.EndsWith('/'))
             {
                 //make sure we use the correct slash if we need to use it
                 bool useBackslash = logPath.Count(x => x.Equals('\\')) > logPath.Count(x => x.Equals('/'));
