@@ -130,7 +130,14 @@ namespace PlexMatchGenerator.Services
 
                                 if (Directory.Exists(mediaPath))
                                 {
-                                    using StreamWriter sw = new StreamWriter($"{mediaPath}/{FileConstants.PlexMatchFileName}", false);
+                                    var finalWritePath = Path.Combine(mediaPath, FileConstants.PlexMatchFileName);
+
+                                    if (options.NoOverwrite && File.Exists(finalWritePath))
+                                    {
+                                        continue;
+                                    }
+
+                                    using StreamWriter sw = new StreamWriter(finalWritePath, false);
                                     sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
                                     sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");

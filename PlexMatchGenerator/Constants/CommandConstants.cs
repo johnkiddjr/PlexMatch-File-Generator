@@ -39,5 +39,14 @@
         public const string LogPathCommandUnixShort = $"-{LogPathCommandShortName}";
         public const string LogPathCommandWindowsLong = $"/{LogPathCommandName}";
         public const string LogPathCommandWindowsShort = $"/{LogPathCommandShortName}";
+
+        public const string NoOverwriteCommandDescription = "Disables automatic overwriting";
+        public const string NoOverwriteCommandHelpName = "Disable Overwrite";
+        public const string NoOverwriteCommandName = "nooverwrite";
+        public const string NoOverwriteCommandShortName = "no";
+        public const string NoOverwriteCommandUnixLong = $"--{NoOverwriteCommandName}";
+        public const string NoOverwriteCommandUnixShort = $"-{NoOverwriteCommandShortName}";
+        public const string NoOverwriteCommandWindowsLong = $"/{NoOverwriteCommandName}";
+        public const string NoOverwriteCommandWindowsShort = $"/{NoOverwriteCommandShortName}";
     }
 }
