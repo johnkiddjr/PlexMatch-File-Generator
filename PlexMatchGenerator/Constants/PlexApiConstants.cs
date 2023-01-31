@@ -8,5 +8,7 @@
         public const string MovieLibraryType = "movie";
         public const string TVLibraryType = "show";
         public const string MusicLibraryType = "artist";
+        public const string ContainerSize = "X-Plex-Container-Size";
+        public const string ContainerStart = "X-Plex-Container-Start";
     }
 }
