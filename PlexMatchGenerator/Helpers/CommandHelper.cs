@@ -15,7 +15,7 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.TokenCommandUnixLong,
                 CommandConstants.TokenCommandUnixShort,
                 CommandConstants.TokenCommandWindowsLong,
-                CommandConstants.TokenCommandWindowsShort
+                CommandConstants.TokenCommandWindowsShort,
             };
 
             var tokenOption = GenerateOption<string>(
@@ -68,21 +68,37 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.LogPathCommandHelpName,
                 CommandConstants.LogPathCommandName);
 
+            var noOverwriteAliases = new string[]
+            {
+                CommandConstants.NoOverwriteCommandUnixLong,
+                CommandConstants.NoOverwriteCommandUnixShort,
+                CommandConstants.NoOverwriteCommandWindowsLong,
+                CommandConstants.NoOverwriteCommandWindowsShort
+            };
+
+            var noOverwriteOption = GenerateOption<bool>(
+                noOverwriteAliases,
+                CommandConstants.NoOverwriteCommandDescription,
+                CommandConstants.NoOverwriteCommandHelpName,
+                CommandConstants.NoOverwriteCommandName);
+
             rootCommand.AddOption(tokenOption);
             rootCommand.AddOption(urlOption);
             rootCommand.AddOption(rootOption);
             rootCommand.AddOption(logOption);
+            rootCommand.AddOption(noOverwriteOption);
 
             rootCommand.SetHandler(
-                async (string token, string url, List<string> rootPaths, string log) =>
+                async (string token, string url, List<string> rootPaths, string log, bool overwrite) =>
                 {
-                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log);
+                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite);
                     await handler(generatorOptions, args);
                 },
                 tokenOption,
                 urlOption,
                 rootOption,
-                logOption);
+                logOption,
+                noOverwriteOption);
 
             return await rootCommand.InvokeAsync(args);
         }
