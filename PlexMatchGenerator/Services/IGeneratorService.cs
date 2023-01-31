@@ -134,6 +134,7 @@ namespace PlexMatchGenerator.Services
 
                                     if (options.NoOverwrite && File.Exists(finalWritePath))
                                     {
+                                        logger.LogInformation(MessageConstants.NoWriteBecauseDisabled, item.MediaItemTitle);
                                         continue;
                                     }
 
