@@ -48,5 +48,14 @@
         public const string NoOverwriteCommandUnixShort = $"-{NoOverwriteCommandShortName}";
         public const string NoOverwriteCommandWindowsLong = $"/{NoOverwriteCommandName}";
         public const string NoOverwriteCommandWindowsShort = $"/{NoOverwriteCommandShortName}";
+
+        public const string PageSizeCommandDescription = "Sets page size to request (default 20)";
+        public const string PageSizeCommandHelpName = "Sets the page size";
+        public const string PageSizeCommandName = "pagesize";
+        public const string PageSizeCommandShortName = "ps";
+        public const string PageSizeCommandUnixLong = $"--{PageSizeCommandName}";
+        public const string PageSizeCommandUnixShort = $"-{PageSizeCommandShortName}";
+        public const string PageSizeCommandWindowsLong = $"/{PageSizeCommandName}";
+        public const string PageSizeCommandWindowsShort = $"/{PageSizeCommandShortName}";
     }
 }

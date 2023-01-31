@@ -82,22 +82,38 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.NoOverwriteCommandHelpName,
                 CommandConstants.NoOverwriteCommandName);
 
+            var pageSizeAliases = new string[]
+            {
+                CommandConstants.PageSizeCommandUnixLong,
+                CommandConstants.PageSizeCommandUnixShort,
+                CommandConstants.PageSizeCommandWindowsLong,
+                CommandConstants.PageSizeCommandWindowsShort
+            };
+
+            var pageSizeOption = GenerateOption<int>(
+                pageSizeAliases,
+                CommandConstants.PageSizeCommandDescription,
+                CommandConstants.PageSizeCommandHelpName,
+                CommandConstants.PageSizeCommandName);
+
             rootCommand.AddOption(tokenOption);
             rootCommand.AddOption(urlOption);
             rootCommand.AddOption(rootOption);
             rootCommand.AddOption(logOption);
+            rootCommand.AddOption(pageSizeOption);
             rootCommand.AddOption(noOverwriteOption);
 
             rootCommand.SetHandler(
-                async (string token, string url, List<string> rootPaths, string log, bool overwrite) =>
+                async (string token, string url, List<string> rootPaths, string log, int pageSize, bool overwrite) =>
                 {
-                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite);
+                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite, pageSize);
                     await handler(generatorOptions, args);
                 },
                 tokenOption,
                 urlOption,
                 rootOption,
                 logOption,
+                pageSizeOption,
                 noOverwriteOption);
 
             return await rootCommand.InvokeAsync(args);
