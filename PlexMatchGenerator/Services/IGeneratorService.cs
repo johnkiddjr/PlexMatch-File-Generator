@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PlexMatchGenerator.Abstractions;
 using PlexMatchGenerator.Constants;
 using PlexMatchGenerator.Helpers;
+using PlexMatchGenerator.Models;
 using PlexMatchGenerator.Options;
 using PlexMatchGenerator.RestModels;
 using RestSharp;
@@ -66,83 +68,15 @@ namespace PlexMatchGenerator.Services
                 // step through the libraries and get a list of the items and their folders
                 foreach (var library in libraries)
                 {
-                    var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(client, $"{PlexApiConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiConstants.SearchAll}", Method.Get);
-
-                    var items = itemRoot?.MediaItemContainer?.MediaItems;
-
-                    if (items is null)
+                    //process the library in batch format starting from 0
+                    var results = await BatchProcessLibrary(client, library, options);
+                    if (results.Success)
+                    {
+                        logger.LogInformation(MessageConstants.LibraryProcessedSuccess, library.LibraryName, results.RecordsProcessed);
+                    }
+                    else
                     {
                         logger.LogError(MessageConstants.LibraryItemsNoResults, library.LibraryName, library.LibraryType, library.LibraryId);
-                        continue;
-                    }
-
-                    // step through each item in the library and get it's tvdbid and drop a .plexmatch file in it's root
-                    foreach (var item in items)
-                    {
-                        var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
-
-                        var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
-
-                        if (locationInfos is null)
-                        {
-                            logger.LogError(MessageConstants.NoLocationInfoForItemFound, item.MediaItemTitle, item.MediaItemId);
-                            continue;
-                        }
-
-                        foreach (var locationInfo in locationInfos)
-                        {
-                            List<IMediaPath> possibleMediaLocations = new List<IMediaPath>();
-
-                            if (library.LibraryType == PlexApiConstants.MovieLibraryType && locationInfo.MediaInfos != null)
-                            {
-                                possibleMediaLocations = locationInfo.MediaInfos.SelectMany(mi => mi.MediaParts).Select(mp => (IMediaPath)mp).ToList();
-
-                                possibleMediaLocations.ForEach(pml =>
-                                {
-                                    var lastForwardSlash = pml.MediaItemPath.LastIndexOf("/");
-                                    var lastBackwardSlash = pml.MediaItemPath.LastIndexOf(@"\");
-
-                                    pml.MediaItemPath = pml.MediaItemPath.Substring(0, (lastBackwardSlash > lastForwardSlash) ? lastBackwardSlash : lastForwardSlash);
-                                });
-                            }
-                            else if ((library.LibraryType == PlexApiConstants.TVLibraryType || library.LibraryType == PlexApiConstants.MusicLibraryType) && locationInfo.MediaItemLocations != null)
-                            {
-                                possibleMediaLocations = locationInfo.MediaItemLocations.Select(mil => (IMediaPath)mil).ToList();
-                            }
-                            else
-                            {
-                                logger.LogWarning(MessageConstants.NoMediaFound, item.MediaItemTitle);
-                                continue;
-                            }
-
-                            foreach (var location in possibleMediaLocations)
-                            {
-                                var mediaPath = location.MediaItemPath;
-
-                                foreach (var rootPath in options.RootPaths)
-                                {
-                                    if (mediaPath.StartsWith(rootPath.PlexRootPath))
-                                    {
-                                        mediaPath = mediaPath.Replace(rootPath.PlexRootPath, rootPath.HostRootPath);
-                                        break;
-                                    }
-                                }                                
-
-                                if (Directory.Exists(mediaPath))
-                                {
-                                    using StreamWriter sw = new StreamWriter($"{mediaPath}/{FileConstants.PlexMatchFileName}", false);
-                                    sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
-                                    sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
-                                    sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
-
-                                    logger.LogInformation(MessageConstants.PlexMatchWritten, item.MediaItemTitle);
-                                }
-                                else
-                                {
-                                    logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -164,6 +98,118 @@ namespace PlexMatchGenerator.Services
 
             logger.LogInformation(MessageConstants.CompletedMessage);
             return 0;
+        }
+
+        private async Task<ProcessingResults> BatchProcessLibrary(RestClient client, Library library, GeneratorOptions options, int startingIndex = 0, ProcessingResults carryoverResults = null)
+        {
+            var pagingHeaders = new Dictionary<string, string>
+            {
+                { PlexApiConstants.ContainerStart, startingIndex.ToString() },
+                { PlexApiConstants.ContainerSize, options.ItemsPerPage.ToString() }
+            };
+
+            var itemRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(
+                client, 
+                $"{PlexApiConstants.LibrarySectionsRequestUrl}/{library.LibraryId}/{PlexApiConstants.SearchAll}", 
+                Method.Get,
+                pagingHeaders);
+
+            var items = itemRoot?.MediaItemContainer?.MediaItems;
+
+            if (items == null && startingIndex == 0)
+            {
+                return new ProcessingResults { Success = false, RecordsProcessed = 0 };
+            }
+            else if (items == null)
+            {
+                return carryoverResults;
+            }
+
+            // step through each item in the library and drop a .plexmatch file in it's root
+            foreach (var item in items)
+            {
+                var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
+
+                var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
+
+                if (locationInfos is null)
+                {
+                    logger.LogError(MessageConstants.NoLocationInfoForItemFound, item.MediaItemTitle, item.MediaItemId);
+                    continue;
+                }
+
+                foreach (var locationInfo in locationInfos)
+                {
+                    List<IMediaPath> possibleMediaLocations = new List<IMediaPath>();
+
+                    if (library.LibraryType == PlexApiConstants.MovieLibraryType && locationInfo.MediaInfos != null)
+                    {
+                        possibleMediaLocations = locationInfo.MediaInfos.SelectMany(mi => mi.MediaParts).Select(mp => (IMediaPath)mp).ToList();
+
+                        possibleMediaLocations.ForEach(pml =>
+                        {
+                            var lastForwardSlash = pml.MediaItemPath.LastIndexOf("/");
+                            var lastBackwardSlash = pml.MediaItemPath.LastIndexOf(@"\");
+
+                            pml.MediaItemPath = pml.MediaItemPath.Substring(0, (lastBackwardSlash > lastForwardSlash) ? lastBackwardSlash : lastForwardSlash);
+                        });
+                    }
+                    else if ((library.LibraryType == PlexApiConstants.TVLibraryType || library.LibraryType == PlexApiConstants.MusicLibraryType) && locationInfo.MediaItemLocations != null)
+                    {
+                        possibleMediaLocations = locationInfo.MediaItemLocations.Select(mil => (IMediaPath)mil).ToList();
+                    }
+                    else
+                    {
+                        logger.LogWarning(MessageConstants.NoMediaFound, item.MediaItemTitle);
+                        continue;
+                    }
+
+                    foreach (var location in possibleMediaLocations)
+                    {
+                        var mediaPath = location.MediaItemPath;
+
+                        foreach (var rootPath in options.RootPaths)
+                        {
+                            if (mediaPath.StartsWith(rootPath.PlexRootPath))
+                            {
+                                mediaPath = mediaPath.Replace(rootPath.PlexRootPath, rootPath.HostRootPath);
+                                break;
+                            }
+                        }
+
+                        if (Directory.Exists(mediaPath))
+                        {
+                            var finalWritePath = Path.Combine(mediaPath, FileConstants.PlexMatchFileName);
+
+                            if (options.NoOverwrite && File.Exists(finalWritePath))
+                            {
+                                logger.LogInformation(MessageConstants.NoWriteBecauseDisabled, item.MediaItemTitle);
+                                continue;
+                            }
+
+                            using StreamWriter sw = new StreamWriter(finalWritePath, false);
+                            sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
+                            sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
+                            sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
+
+                            logger.LogInformation(MessageConstants.PlexMatchWritten, item.MediaItemTitle);
+                        }
+                        else
+                        {
+                            logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
+                        }
+                    }
+                }
+            }
+
+            if (carryoverResults == null)
+            {
+                carryoverResults = new ProcessingResults { Success = true };
+            }
+
+            carryoverResults.RecordsProcessed += items.Count;
+
+            return await BatchProcessLibrary(client, library, options, startingIndex + options.ItemsPerPage, carryoverResults);
         }
     }
 }

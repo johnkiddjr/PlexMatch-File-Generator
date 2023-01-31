@@ -15,7 +15,7 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.TokenCommandUnixLong,
                 CommandConstants.TokenCommandUnixShort,
                 CommandConstants.TokenCommandWindowsLong,
-                CommandConstants.TokenCommandWindowsShort
+                CommandConstants.TokenCommandWindowsShort,
             };
 
             var tokenOption = GenerateOption<string>(
@@ -68,21 +68,53 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.LogPathCommandHelpName,
                 CommandConstants.LogPathCommandName);
 
+            var noOverwriteAliases = new string[]
+            {
+                CommandConstants.NoOverwriteCommandUnixLong,
+                CommandConstants.NoOverwriteCommandUnixShort,
+                CommandConstants.NoOverwriteCommandWindowsLong,
+                CommandConstants.NoOverwriteCommandWindowsShort
+            };
+
+            var noOverwriteOption = GenerateOption<bool>(
+                noOverwriteAliases,
+                CommandConstants.NoOverwriteCommandDescription,
+                CommandConstants.NoOverwriteCommandHelpName,
+                CommandConstants.NoOverwriteCommandName);
+
+            var pageSizeAliases = new string[]
+            {
+                CommandConstants.PageSizeCommandUnixLong,
+                CommandConstants.PageSizeCommandUnixShort,
+                CommandConstants.PageSizeCommandWindowsLong,
+                CommandConstants.PageSizeCommandWindowsShort
+            };
+
+            var pageSizeOption = GenerateOption<int>(
+                pageSizeAliases,
+                CommandConstants.PageSizeCommandDescription,
+                CommandConstants.PageSizeCommandHelpName,
+                CommandConstants.PageSizeCommandName);
+
             rootCommand.AddOption(tokenOption);
             rootCommand.AddOption(urlOption);
             rootCommand.AddOption(rootOption);
             rootCommand.AddOption(logOption);
+            rootCommand.AddOption(pageSizeOption);
+            rootCommand.AddOption(noOverwriteOption);
 
             rootCommand.SetHandler(
-                async (string token, string url, List<string> rootPaths, string log) =>
+                async (string token, string url, List<string> rootPaths, string log, int pageSize, bool overwrite) =>
                 {
-                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log);
+                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite, pageSize);
                     await handler(generatorOptions, args);
                 },
                 tokenOption,
                 urlOption,
                 rootOption,
-                logOption);
+                logOption,
+                pageSizeOption,
+                noOverwriteOption);
 
             return await rootCommand.InvokeAsync(args);
         }
