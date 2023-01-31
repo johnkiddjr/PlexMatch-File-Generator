@@ -17,6 +17,8 @@ For information on how to get your Plex token, see this support link: https://su
   - Usage: -l /home/user/logs
 - Get version (--version)
   - This will output the version of the executable being run
+- Disable Automatic Overwrite (--nooverwrite or -no)
+  - This will skip writing any file if it already exists instead of overwriting it.
 - View help (--help)
   - This will output the parameter help
 
