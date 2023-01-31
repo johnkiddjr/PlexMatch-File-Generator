@@ -2,7 +2,6 @@
 {
     public class MediaConstants
     {
-        public const string PlexMatchFileName = ".plexmatch";
         public const string PlexMatchTitleHeader = "Title: ";
         public const string PlexMatchYearHeader = "Year: ";
         public const string PlexMatchGuidHeader = "Guid: ";

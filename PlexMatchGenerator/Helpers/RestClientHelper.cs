@@ -1,4 +1,5 @@
-﻿using RestSharp;
+﻿using PlexMatchGenerator.Constants;
+using RestSharp;
 using RestSharp.Serializers.NewtonsoftJson;
 
 namespace PlexMatchGenerator.Helpers
@@ -9,13 +10,13 @@ namespace PlexMatchGenerator.Helpers
         {
             var client = new RestClient(plexUrl);
             client.UseNewtonsoftJson();
-            client.AddDefaultHeader("Accept", "application/json");
-            client.AddDefaultHeader("X-Plex-Token", plexToken);
+            client.AddDefaultHeader(KnownHeaders.Accept, HttpConstants.ApplicationJson);
+            client.AddDefaultHeader(HttpConstants.PlexTokenHeaderName, plexToken);
 
             return client;
         }
 
-        public static T CreateAndGetRestResponse<T>(RestClient client, string resource, Method method, Dictionary<string, string> additionalHeaders = null)
+        public static async Task<T> CreateAndGetRestResponse<T>(RestClient client, string resource, Method method, Dictionary<string, string> additionalHeaders = null)
         {
             var request = new RestRequest(resource, method);
 
@@ -27,11 +28,9 @@ namespace PlexMatchGenerator.Helpers
                 }
             }
 
-            var response = client.ExecuteGetAsync<T>(request);
+            var response = await client.ExecuteGetAsync<T>(request);
 
-            response.Wait(5000);
-
-            return response.Result.Data;
+            return response.Data;
         }
     }
 }

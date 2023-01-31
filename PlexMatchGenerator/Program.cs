@@ -1,12 +1,9 @@
-﻿// check for a paramter of the plex token, prompt if not present
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PlexMatchGenerator.Constants;
 using PlexMatchGenerator.Helpers;
-using PlexMatchGenerator.RestModels;
+using PlexMatchGenerator.Options;
 using PlexMatchGenerator.Services;
-using RestSharp;
 using Serilog;
 using Serilog.Enrichers;
 
@@ -14,17 +11,20 @@ namespace PlexMatchGenerator
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
-            var generatorOptions = ArgumentHelper.ProcessCommandLineArguments(args.ToList());
+            return await CommandHelper.GenerateRootCommandAndExecuteHandler(args, Run);
+        }
 
+        static async Task<int> Run(GeneratorOptions generatorOptions, string[] args)
+        {
             var startup = new Startup();
 
             if (string.IsNullOrEmpty(generatorOptions.LogPath))
             {
                 Log.Logger = new LoggerConfiguration()
-                    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
-                    .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
+                    .MinimumLevel.Override(LogSourceConstants.Microsoft, Serilog.Events.LogEventLevel.Information)
+                    .MinimumLevel.Override(LogSourceConstants.System, Serilog.Events.LogEventLevel.Warning)
                     .MinimumLevel.Information()
                     .Enrich.With(new MachineNameEnricher())
                     .WriteTo.Console()
@@ -33,16 +33,16 @@ namespace PlexMatchGenerator
             else
             {
                 Log.Logger = new LoggerConfiguration()
-                    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
-                    .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
+                    .MinimumLevel.Override(LogSourceConstants.Microsoft, Serilog.Events.LogEventLevel.Information)
+                    .MinimumLevel.Override(LogSourceConstants.System, Serilog.Events.LogEventLevel.Warning)
                     .MinimumLevel.Information()
                     .Enrich.With(new MachineNameEnricher())
                     .WriteTo.Console()
-                    .WriteTo.File(path: $"{generatorOptions.LogPath}plexmatch.log")
+                    .WriteTo.File(path: $"{generatorOptions.LogPath}{FileConstants.LogFileName}")
                     .CreateLogger();
             }
 
-            Log.Logger.Information("Logger attached. Startup complete. Running file generator...");
+            Log.Logger.Information(MessageConstants.LoggerAttachedMessage);
 
             var host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
@@ -53,7 +53,8 @@ namespace PlexMatchGenerator
                 .Build();
 
             var svc = ActivatorUtilities.GetServiceOrCreateInstance<IGeneratorService>(host.Services);
-            svc.Run(generatorOptions);
+
+            return await svc.Run(generatorOptions);
         }
     }
 }
