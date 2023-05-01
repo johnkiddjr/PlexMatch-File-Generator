@@ -81,10 +81,16 @@ publish dotnet:
 create release:
   stage: release
   image: $UBUNTU_IMAGE
-  only:
-    - tags
+  artifacts:
+    paths:
+      - test/
+    expire_in: 1 week
   script:
-    - echo "test"
+    - mkdir test
+    - echo "test" > test/test.txt
+  after_script:
+    - echo "more test" > test/test.txt
+    - cat test/test.txt
 
 notify discord success:
   stage: notify
