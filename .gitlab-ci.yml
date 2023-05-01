@@ -1,0 +1,70 @@
+include:
+- template: Security/SAST.gitlab-ci.yml
+
+stages:
+- build
+- test
+#- sast
+- publish
+- release
+- notify
+
+build dotnet:
+  stage: build
+  image: $DOTNET_BUILD
+  script:
+    - dotnet restore
+    - dotnet build -c Release --no-restore
+
+test dotnet:
+  stage: test
+  image: $DOTNET_BUILD
+  script:
+    - dotnet restore
+    - dotnet test -v n --no-restore
+
+publish dotnet:
+  stage: publish
+  image: $DOTNET_BUILD
+  only: tags
+  artifacts:
+    paths:
+      - publish/
+    expire_in: 1 week
+  script:
+    - echo "Version Tag " $env:CI_COMMIT_TAG
+    - $VERSION = ${env:CI_COMMIT_TAG:1}
+    - dotnet restore
+    - dotnet publish -c Release -o ./publish -r win-x86 -p:Version="${VERSION}" -p:PublishSinglefile=true --self-contained --no-restore
+    - mv ./publish/PlexMatchGenerator.exe ./publish/PlexMatchGenerator-Windows-x86.exe
+    - dotnet publish -c Release -o ./publish -r linux-x64 -p:Version="${VERSION}" -p:PublishSinglefile=true --self-contained --no-restore
+    - mv ./publish/PlexMatchGenerator ./publish/PlexMatchGenerator-Linux-x64
+    - dotnet publish -c Release -o ./publish -r osx-x64 -p:Version="${VERSION}" -p:PublishSinglefile=true --self-contained --no-restore
+    - mv ./publish/PlexMatchGenerator ./publish/PlexMatchGenerator-MacOSX-x64
+
+create release:
+  stage: release
+  image: $UBUNTU_IMAGE
+  only: tags
+  script:
+    - echo "test"
+
+notify discord success:
+  stage: notify
+  image: $UBUNTU_IMAGE
+  script:
+    - apt update && apt install git curl wget -y
+    - wget https://raw.githubusercontent.com/DiscordHooks/gitlab-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - /bin/bash ./send.sh success $WEBHOOK_URL
+  when: on_success
+
+notify discord failure:
+  stage: notify
+  image: $UBUNTU_IMAGE
+  script:
+    - apt update && apt install git curl wget -y
+    - wget https://raw.githubusercontent.com/DiscordHooks/gitlab-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - /bin/bash ./send.sh failure $WEBHOOK_URL
+  when: on_failure
