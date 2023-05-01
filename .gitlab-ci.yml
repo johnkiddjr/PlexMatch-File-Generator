@@ -26,7 +26,8 @@ test dotnet:
 publish dotnet:
   stage: publish
   image: $DOTNET_BUILD
-  only: tags
+  only:
+    - tags
   artifacts:
     paths:
       - publish/
