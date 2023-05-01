@@ -51,8 +51,6 @@ upload sast artifcats:
     - workdir=$(pwd)
     - >
       curl --location 'https://sast.johnkiddjr.com/api/UploadReport'
-      --form "Content=@/${workdir}/sast/eslint-sast.json"
-      --form "Content=@/${workdir}/sast/semgrep-sast.json"
       --form "Content=@/${workdir}/sast/security-code-scan-sast.json"
       --form "UserName=${GITLAB_USER_LOGIN}"
       --form "Email=${GITLAB_USER_EMAIL}"
