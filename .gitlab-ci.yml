@@ -89,8 +89,8 @@ create release:
     - mkdir test
     - echo "test" > test/test.txt
   after_script:
-    - echo "more test" > test/test.txt
-    - cat test/test.txt
+    - mv test/test.txt test/test1.txt
+    - cat test/test1.txt
 
 notify discord success:
   stage: notify
