@@ -46,7 +46,8 @@ publish dotnet:
 create release:
   stage: release
   image: $UBUNTU_IMAGE
-  only: tags
+  only:
+    - tags
   script:
     - echo "test"
 
