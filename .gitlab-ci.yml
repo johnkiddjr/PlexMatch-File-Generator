@@ -1,5 +1,4 @@
-include:
-- template: Security/SAST.gitlab-ci.yml
+include: .gitlab/SAST.yml
 
 stages:
 - build
@@ -22,41 +21,6 @@ test dotnet:
   script:
     - dotnet restore
     - dotnet test -v n --no-restore
-
-security-code-scan-sast:
-  stage: sast
-  artifacts:
-    paths:
-      - sast/
-    expire_in: 1 week
-  variables:
-    SAST_ANALYZER_IMAGE_TAG: 3
-  after_script:
-    - mkdir sast
-    - cp gl-sast-report.json sast/security-code-scan-sast.json
-
-upload sast artifcats:
-  needs: ["security-code-scan-sast"]
-  stage: sast
-  image: $DOTNET_BUILD
-  except: 
-    - tags
-    - main
-  script:
-    # upload sast to sast analyzer
-    - echo ${GITLAB_USER_LOGIN}
-    - echo ${GITLAB_USER_EMAIL}
-    - echo ${CI_PROJECT_NAME}
-    - echo ${CI_COMMIT_SHORT_SHA}
-    - workdir=$(pwd)
-    - >
-      curl --location 'https://sast.johnkiddjr.com/api/UploadReport'
-      --form "Content=@/${workdir}/sast/security-code-scan-sast.json"
-      --form "UserName=${GITLAB_USER_LOGIN}"
-      --form "Email=${GITLAB_USER_EMAIL}"
-      --form "ProjectName=${CI_PROJECT_NAME}"
-      --form "CommitId=${CI_COMMIT_SHORT_SHA}"
-      -v
 
 publish dotnet:
   stage: publish
