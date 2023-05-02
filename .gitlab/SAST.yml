@@ -14,6 +14,7 @@ variables:
   SAST_EXCLUDED_ANALYZERS: ""
   SAST_EXCLUDED_PATHS: "spec, test, tests, tmp"
   SCAN_KUBERNETES_MANIFESTS: "false"
+  SAST_UPLOAD_ENDPOINT: ""
 
 upload-sast-artifacts:
   stage: post-sast
@@ -25,7 +26,7 @@ upload-sast-artifacts:
     - workdir=$(pwd)
     - zip -j sast.zip $workdir/sast/*
     - >
-      curl --location 'https://sast.johnkiddjr.com/api/UploadReport'
+      curl --location "${SAST_UPLOAD_ENDPOINT}"
       --form "Content=@/${workdir}/sast.zip"
       --form "UserName=${GITLAB_USER_LOGIN}"
       --form "Email=${GITLAB_USER_EMAIL}"
@@ -34,6 +35,8 @@ upload-sast-artifacts:
       -v
   rules:
     - if: $SAST_DISABLED
+      when: never
+    - if: $SAST_UPLOAD_DISABLED
       when: never
     - if: $CI_COMMIT_BRANCH
 
