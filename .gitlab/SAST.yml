@@ -20,7 +20,7 @@ upload-sast-artifacts:
   image: ubuntu:22.04
   before_script:
     - apt update
-    - apt install zip -y
+    - apt install zip curl -y
   script:
     - workdir=$(pwd)
     - zip -j sast.zip $workdir/sast/*
