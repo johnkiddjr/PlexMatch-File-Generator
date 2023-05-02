@@ -4,6 +4,7 @@ stages:
 - build
 - test
 - sast
+- post-sast
 - publish
 - release
 - notify
@@ -45,6 +46,8 @@ publish dotnet:
 create release:
   stage: release
   image: $UBUNTU_IMAGE
+  only:
+    - tags
   artifacts:
     paths:
       - test/

@@ -15,6 +15,27 @@ variables:
   SAST_EXCLUDED_PATHS: "spec, test, tests, tmp"
   SCAN_KUBERNETES_MANIFESTS: "false"
 
+upload-sast-artifacts:
+  stage: post-sast
+  image: ubuntu:22.04
+  before_script:
+    - apt install zip -y
+  script:
+    - workdir=$(pwd)
+    - zip -j sast.zip $workdir/sast/*
+    - >
+      curl --location 'https://sast.johnkiddjr.com/api/UploadReport'
+      --form "Content=@/${workdir}/sast.zip"
+      --form "UserName=${GITLAB_USER_LOGIN}"
+      --form "Email=${GITLAB_USER_EMAIL}"
+      --form "ProjectName=${CI_PROJECT_NAME}"
+      --form "CommitId=${CI_COMMIT_SHORT_SHA}"
+      -v
+  rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
 sast:
   stage: sast
   artifacts:
