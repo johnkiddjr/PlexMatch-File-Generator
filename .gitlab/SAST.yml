@@ -19,6 +19,7 @@ upload-sast-artifacts:
   stage: post-sast
   image: ubuntu:22.04
   before_script:
+    - apt update
     - apt install zip -y
   script:
     - workdir=$(pwd)
