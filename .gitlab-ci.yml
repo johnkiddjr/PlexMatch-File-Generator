@@ -1,7 +1,7 @@
 variables:
   SAST_UPLOAD_ENDPOINT: "https://sast.johnkiddjr.com/api/UploadReport"
 
-include: .gitlab/SAST.yml
+include: "https://source.kiddclan.com/johnkiddjr/ci-templates/-/raw/main/SAST.gitlab-ci.yml"
 
 stages:
 - build
