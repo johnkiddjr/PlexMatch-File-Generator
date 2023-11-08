@@ -6,7 +6,7 @@ namespace PlexMatchGenerator.Helpers
 {
     public class ArgumentHelper
     {
-        public static GeneratorOptions ProcessCommandLineResults(string plexToken, string plexUrl, List<string> rootPaths, string logPath, bool noOverwrite, int pageSize)
+        public static GeneratorOptions ProcessCommandLineResults(string plexToken, string plexUrl, List<string> rootPaths, string logPath, bool noOverwrite, int pageSize, List<string> libraries)
         {
             //ensure we end the path with a slash
             if (logPath != null && !logPath.EndsWith("\\") && !logPath.EndsWith('/'))
@@ -24,7 +24,8 @@ namespace PlexMatchGenerator.Helpers
                 PlexServerToken = plexToken,
                 RootPaths = GenerateRootPaths(rootPaths),
                 NoOverwrite = noOverwrite,
-                ItemsPerPage = pageSize == 0 ? 20 : pageSize
+                ItemsPerPage = pageSize == 0 ? 20 : pageSize,
+                LibraryNames = libraries
             };
         }
 

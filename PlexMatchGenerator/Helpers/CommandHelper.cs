@@ -96,17 +96,32 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.PageSizeCommandHelpName,
                 CommandConstants.PageSizeCommandName);
 
+            var libraryAliases = new string[]
+            {
+                CommandConstants.LibraryCommandUnixLong,
+                CommandConstants.LibraryCommandUnixShort,
+                CommandConstants.LibraryCommandWindowsLong,
+                CommandConstants.LibraryCommandWindowsShort
+            };
+
+            var libraryOption = GenerateOption<List<string>>(
+                libraryAliases,
+                CommandConstants.LibraryCommandDescription,
+                CommandConstants.LibraryCommandHelpName,
+                CommandConstants.LibraryCommandName);
+
             rootCommand.AddOption(tokenOption);
             rootCommand.AddOption(urlOption);
             rootCommand.AddOption(rootOption);
             rootCommand.AddOption(logOption);
             rootCommand.AddOption(pageSizeOption);
             rootCommand.AddOption(noOverwriteOption);
+            rootCommand.AddOption(libraryOption);
 
             rootCommand.SetHandler(
-                async (string token, string url, List<string> rootPaths, string log, int pageSize, bool overwrite) =>
+                async (string token, string url, List<string> rootPaths, string log, int pageSize, bool overwrite, List<string> libraries) =>
                 {
-                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite, pageSize);
+                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite, pageSize, libraries);
                     await handler(generatorOptions, args);
                 },
                 tokenOption,
@@ -114,7 +129,8 @@ namespace PlexMatchGenerator.Helpers
                 rootOption,
                 logOption,
                 pageSizeOption,
-                noOverwriteOption);
+                noOverwriteOption,
+                libraryOption);
 
             return await rootCommand.InvokeAsync(args);
         }
