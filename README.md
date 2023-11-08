@@ -25,6 +25,14 @@ For information on how to get your Plex token, see this support link: [https://s
   - If even 1 library is added, every library not matching will be ignored
   - Library names are **not** case-sensitive
   - Usage: -lib TV
+- Restrict to specific media items (-s or --show)
+  - Despite the parameter name, this can be used on any library and is not restricted to TV Shows
+  - This works best when specified with -lib as otherwise this will have a significant performance impact on larger libraries
+  - This parameter can be specified multiple times
+  - Each media item specified is added to the allow list
+  - If even 1 media item is added, every media item not matching will be ignored
+  - Media item names are **not** case-sensitive
+  - Usage: -s firefly
 - Get version (--version)
   - This will output the version of the executable being run
 - Disable Automatic Overwrite (--nooverwrite or -no)

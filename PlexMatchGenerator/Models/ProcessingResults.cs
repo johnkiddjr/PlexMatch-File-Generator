@@ -4,5 +4,6 @@
     {
         public bool Success { get; set; }
         public int RecordsProcessed { get; set; }
+        public int RecordsSkipped { get; set; }
     }
 }

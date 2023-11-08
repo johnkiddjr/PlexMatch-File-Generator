@@ -81,7 +81,14 @@ namespace PlexMatchGenerator.Services
                     var results = await BatchProcessLibrary(client, library, options);
                     if (results.Success)
                     {
-                        logger.LogInformation(MessageConstants.LibraryProcessedSuccess, library.LibraryName, results.RecordsProcessed);
+                        if (results.RecordsSkipped > 0)
+                        {
+                            logger.LogInformation(MessageConstants.LibraryProcessedSuccessWithSkipped, library.LibraryName, results.RecordsProcessed, results.RecordsSkipped);
+                        }
+                        else
+                        {
+                            logger.LogInformation(MessageConstants.LibraryProcessedSuccess, library.LibraryName, results.RecordsProcessed);
+                        }
                     }
                     else
                     {
@@ -125,6 +132,9 @@ namespace PlexMatchGenerator.Services
 
             var items = itemRoot?.MediaItemContainer?.MediaItems;
 
+            int itemsProcessed = 0;
+            int itemsSkipped = 0;
+
             if (items == null && startingIndex == 0)
             {
                 return new ProcessingResults { Success = false, RecordsProcessed = 0 };
@@ -137,6 +147,20 @@ namespace PlexMatchGenerator.Services
             // step through each item in the library and drop a .plexmatch file in it's root
             foreach (var item in items)
             {
+                // if we are only targetting specific shows which options.ShowNames would be null or empty, skip the ones not in the list by matching them to the lower invarient mediaitemtitle
+                if (options.ShowNames != null &&
+                    options.ShowNames.Count > 0 &&
+                    !options.ShowNames.Any(sn => sn.ToLowerInvariant() == item.MediaItemTitle.ToLowerInvariant()))
+                {
+                    logger.LogInformation(MessageConstants.ShowSkipped, item.MediaItemTitle);
+                    itemsSkipped++;
+                    continue;
+                }
+                else
+                {
+                    itemsProcessed++;
+                }
+
                 var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
 
                 var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
@@ -216,7 +240,8 @@ namespace PlexMatchGenerator.Services
                 carryoverResults = new ProcessingResults { Success = true };
             }
 
-            carryoverResults.RecordsProcessed += items.Count;
+            carryoverResults.RecordsProcessed += itemsProcessed;
+            carryoverResults.RecordsSkipped += itemsSkipped;
 
             return await BatchProcessLibrary(client, library, options, startingIndex + options.ItemsPerPage, carryoverResults);
         }
