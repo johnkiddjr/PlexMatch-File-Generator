@@ -22,6 +22,15 @@
         public const string LibraryCommandWindowsLong = $"/{LibraryCommandName}";
         public const string LibraryCommandWindowsShort = $"/{LibraryCommandShortName}";
 
+        public const string ShowCommandDescription = "Name of the show within Plex to generate .plexmatch files for, this command can be passed multiple times.";
+        public const string ShowCommandHelpName = "Plex Show Name";
+        public const string ShowCommandName = "show";
+        public const string ShowCommandShortName = "s";
+        public const string ShowCommandUnixLong = $"--{ShowCommandName}";
+        public const string ShowCommandUnixShort = $"-{ShowCommandShortName}";
+        public const string ShowCommandWindowsLong = $"/{ShowCommandName}";
+        public const string ShowCommandWindowsShort = $"/{ShowCommandShortName}";
+
         public const string UrlCommandDescription = "URL to access your Plex server. Must include the http or https portion";
         public const string UrlCommandHelpName = "Plex Server URL";
         public const string UrlCommandName = "url";
