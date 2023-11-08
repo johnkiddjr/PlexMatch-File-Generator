@@ -17,6 +17,7 @@
         public const string LibraryItemsNoResults = "Library {libraryName} of type {libraryType} with ID {libraryID} returned no items";
         public const string LibraryProcessedSuccess = "Processed results for {library}: {records} processed";
         public const string NoWriteBecauseDisabled = ".plexmatch file not written because overwrite disabled for item: {mediaTitle}";
+        public const string LibrarySkipped = "Library {library} skipped because it is not in the list of libraries to process";
 
         //exception messages
         public const string ExceptionHeaderMessage = "An unhandeled exception occurred details below:";
