@@ -68,6 +68,15 @@ namespace PlexMatchGenerator.Services
                 // step through the libraries and get a list of the items and their folders
                 foreach (var library in libraries)
                 {
+                    // if we are only targetting specific libraries which options.LibraryNames would be null or empty, skip the ones not in the list by matching them to the lower invarient name
+                    if (options.LibraryNames != null &&
+                        options.LibraryNames.Count > 0 &&
+                        !options.LibraryNames.Any(ln => ln.ToLowerInvariant() == library.LibraryName.ToLowerInvariant()))
+                    {
+                        logger.LogInformation(MessageConstants.LibrarySkipped, library.LibraryName);
+                        continue;
+                    }
+
                     //process the library in batch format starting from 0
                     var results = await BatchProcessLibrary(client, library, options);
                     if (results.Success)

@@ -13,6 +13,15 @@
         public const string TokenCommandWindowsLong = $"/{TokenCommandName}";
         public const string TokenCommandWindowsShort = $"/{TokenCommandShortName}";
 
+        public const string LibraryCommandDescription = "Name of the library within Plex to generate .plexmatch files for, this command can be passed multiple times.";
+        public const string LibraryCommandHelpName = "Plex Library Name";
+        public const string LibraryCommandName = "library";
+        public const string LibraryCommandShortName = "lib";
+        public const string LibraryCommandUnixLong = $"--{LibraryCommandName}";
+        public const string LibraryCommandUnixShort = $"-{LibraryCommandShortName}";
+        public const string LibraryCommandWindowsLong = $"/{LibraryCommandName}";
+        public const string LibraryCommandWindowsShort = $"/{LibraryCommandShortName}";
+
         public const string UrlCommandDescription = "URL to access your Plex server. Must include the http or https portion";
         public const string UrlCommandHelpName = "Plex Server URL";
         public const string UrlCommandName = "url";
