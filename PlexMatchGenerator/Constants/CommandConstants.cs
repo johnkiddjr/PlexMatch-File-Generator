@@ -13,6 +13,24 @@
         public const string TokenCommandWindowsLong = $"/{TokenCommandName}";
         public const string TokenCommandWindowsShort = $"/{TokenCommandShortName}";
 
+        public const string LibraryCommandDescription = "Name of the library within Plex to generate .plexmatch files for, this command can be passed multiple times.";
+        public const string LibraryCommandHelpName = "Plex Library Name";
+        public const string LibraryCommandName = "library";
+        public const string LibraryCommandShortName = "lib";
+        public const string LibraryCommandUnixLong = $"--{LibraryCommandName}";
+        public const string LibraryCommandUnixShort = $"-{LibraryCommandShortName}";
+        public const string LibraryCommandWindowsLong = $"/{LibraryCommandName}";
+        public const string LibraryCommandWindowsShort = $"/{LibraryCommandShortName}";
+
+        public const string ShowCommandDescription = "Name of the show within Plex to generate .plexmatch files for, this command can be passed multiple times.";
+        public const string ShowCommandHelpName = "Plex Show Name";
+        public const string ShowCommandName = "show";
+        public const string ShowCommandShortName = "s";
+        public const string ShowCommandUnixLong = $"--{ShowCommandName}";
+        public const string ShowCommandUnixShort = $"-{ShowCommandShortName}";
+        public const string ShowCommandWindowsLong = $"/{ShowCommandName}";
+        public const string ShowCommandWindowsShort = $"/{ShowCommandShortName}";
+
         public const string UrlCommandDescription = "URL to access your Plex server. Must include the http or https portion";
         public const string UrlCommandHelpName = "Plex Server URL";
         public const string UrlCommandName = "url";
@@ -49,7 +67,7 @@
         public const string NoOverwriteCommandWindowsLong = $"/{NoOverwriteCommandName}";
         public const string NoOverwriteCommandWindowsShort = $"/{NoOverwriteCommandShortName}";
 
-        public const string PageSizeCommandDescription = "Sets page size to request (default 20)";
+        public const string PageSizeCommandDescription = "Sets page size to request (default: 20)";
         public const string PageSizeCommandHelpName = "Sets the page size";
         public const string PageSizeCommandName = "pagesize";
         public const string PageSizeCommandShortName = "ps";
@@ -57,5 +75,14 @@
         public const string PageSizeCommandUnixShort = $"-{PageSizeCommandShortName}";
         public const string PageSizeCommandWindowsLong = $"/{PageSizeCommandName}";
         public const string PageSizeCommandWindowsShort = $"/{PageSizeCommandShortName}";
+
+        public const string PerSeasonProcessingCommandDescription = "Enables per season process for all items, default behavior processes seasons only when non-default episode ordering is used.";
+        public const string PerSeasonProcessingCommandHelpName = "Enables per season processing";
+        public const string PerSeasonProcessingCommandName = "seasonprocessing";
+        public const string PerSeasonProcessingCommandShortName = "sp";
+        public const string PerSeasonProcessingCommandUnixLong = $"--{PerSeasonProcessingCommandName}";
+        public const string PerSeasonProcessingCommandUnixShort = $"-{PerSeasonProcessingCommandShortName}";
+        public const string PerSeasonProcessingCommandWindowsLong = $"/{PerSeasonProcessingCommandName}";
+        public const string PerSeasonProcessingCommandWindowsShort = $"/{PerSeasonProcessingCommandShortName}";
     }
 }

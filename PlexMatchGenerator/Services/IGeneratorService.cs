@@ -68,11 +68,27 @@ namespace PlexMatchGenerator.Services
                 // step through the libraries and get a list of the items and their folders
                 foreach (var library in libraries)
                 {
+                    // if we are only targetting specific libraries which options.LibraryNames would be null or empty, skip the ones not in the list by matching them to the lower invarient name
+                    if (options.LibraryNames != null &&
+                        options.LibraryNames.Count > 0 &&
+                        !options.LibraryNames.Any(ln => ln.ToLowerInvariant() == library.LibraryName.ToLowerInvariant()))
+                    {
+                        logger.LogInformation(MessageConstants.LibrarySkipped, library.LibraryName);
+                        continue;
+                    }
+
                     //process the library in batch format starting from 0
                     var results = await BatchProcessLibrary(client, library, options);
                     if (results.Success)
                     {
-                        logger.LogInformation(MessageConstants.LibraryProcessedSuccess, library.LibraryName, results.RecordsProcessed);
+                        if (results.RecordsSkipped > 0)
+                        {
+                            logger.LogInformation(MessageConstants.LibraryProcessedSuccessWithSkipped, library.LibraryName, results.RecordsProcessed, results.RecordsSkipped);
+                        }
+                        else
+                        {
+                            logger.LogInformation(MessageConstants.LibraryProcessedSuccess, library.LibraryName, results.RecordsProcessed);
+                        }
                     }
                     else
                     {
@@ -116,6 +132,9 @@ namespace PlexMatchGenerator.Services
 
             var items = itemRoot?.MediaItemContainer?.MediaItems;
 
+            int itemsProcessed = 0;
+            int itemsSkipped = 0;
+
             if (items == null && startingIndex == 0)
             {
                 return new ProcessingResults { Success = false, RecordsProcessed = 0 };
@@ -128,6 +147,20 @@ namespace PlexMatchGenerator.Services
             // step through each item in the library and drop a .plexmatch file in it's root
             foreach (var item in items)
             {
+                // if we are only targetting specific shows which options.ShowNames would be null or empty, skip the ones not in the list by matching them to the lower invarient mediaitemtitle
+                if (options.ShowNames != null &&
+                    options.ShowNames.Count > 0 &&
+                    !options.ShowNames.Any(sn => sn.ToLowerInvariant() == item.MediaItemTitle.ToLowerInvariant()))
+                {
+                    logger.LogInformation(MessageConstants.ShowSkipped, item.MediaItemTitle);
+                    itemsSkipped++;
+                    continue;
+                }
+                else
+                {
+                    itemsProcessed++;
+                }
+
                 var locationInfoRoot = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(client, $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}", Method.Get);
 
                 var locationInfos = locationInfoRoot?.MediaItemInfoContainer?.MediaItemInfos;
@@ -188,15 +221,114 @@ namespace PlexMatchGenerator.Services
                             }
 
                             using StreamWriter sw = new StreamWriter(finalWritePath, false);
-                            sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
-                            sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
-                            sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
+                            PlexMatchFileHelper.WritePlexMatchFile(sw, new PlexMatchInfo
+                            {
+                                FileType = PlexMatchFileType.Main,
+                                MediaItemTitle = item.MediaItemTitle,
+                                MediaItemReleaseYear = item.MediaItemReleaseYear,
+                                MediaItemPlexMatchGuid = item.MediaItemPlexMatchGuid
+                            });
 
                             logger.LogInformation(MessageConstants.PlexMatchWritten, item.MediaItemTitle);
                         }
                         else
                         {
                             logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
+                        }
+                    }
+
+                    // if per season processing is enable, or this uses non-standard sorting, process the seasons
+                    if (item.MediaType == "show" && (options.EnablePerSeasonProcessing || locationInfo.ShowOrdering != ShowOrdering.Default))
+                    {
+                        Dictionary<string, PlexMatchInfo> seasonPaths = new Dictionary<string, PlexMatchInfo>();
+                        // get the season information
+                        var seasonInfo = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(
+                            client, 
+                            $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}/{PlexApiConstants.MediaItemChildren}", 
+                            Method.Get);
+
+                        // make sure there is at least 1 season
+                        if(seasonInfo?.MediaItemContainer?.MediaItems?.Any() != true)
+                        {
+                            continue;
+                        }
+
+                        // get the season children information so we can extract the season path(s) information
+                        foreach (var season in seasonInfo.MediaItemContainer.MediaItems)
+                        {
+                            var seasonChildrenInfo = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(
+                                client, 
+                                $"{PlexApiConstants.MetaDataRequestUrl}/{season.MediaItemId}/{PlexApiConstants.MediaItemChildren}",
+                                Method.Get);
+
+                            var seasonChildren = seasonChildrenInfo?.MediaItemInfoContainer?.MediaItemInfos;
+
+                            if(seasonChildren?.Any() != true)
+                            {
+                                continue;
+                            }
+
+                            var uniqueSeasonPaths = seasonChildren
+                                .SelectMany(episode => episode.MediaInfos
+                                    .SelectMany(info => info.MediaParts
+                                        .Select(part => Path.GetDirectoryName(part.MediaItemPath))))
+                                .Distinct()
+                                .ToList();
+
+                            foreach (var path in uniqueSeasonPaths)
+                            {
+                                if (!seasonPaths.ContainsKey(path))
+                                {
+                                    seasonPaths.Add(path, new PlexMatchInfo
+                                    {
+                                        FileType = PlexMatchFileType.Season,
+                                        MediaItemTitle = item.MediaItemTitle,
+                                        MediaItemReleaseYear = item.MediaItemReleaseYear,
+                                        MediaItemPlexMatchGuid = season.MediaItemPlexMatchGuid, //use the season plexmatch guid
+                                        SeasonNumber = season.SeasonNumber
+                                    });
+                                }
+                            }
+                        }
+
+
+                        // write the plexmatch file for the season
+                        foreach (var plexMatchPathAndFile in seasonPaths)
+                        {
+                            var mediaPath = plexMatchPathAndFile.Key;
+
+                            foreach (var rootPath in options.RootPaths)
+                            {
+                                // ensure both rootpath and mediapath use the same directory separator
+                                var normalizedRootPath = Path.GetFullPath(rootPath.PlexRootPath);
+                                var normalizedMediaPath = Path.GetFullPath(mediaPath);
+                                
+
+                                if (normalizedMediaPath.StartsWith(normalizedRootPath))
+                                {
+                                    mediaPath = normalizedMediaPath.Replace(normalizedRootPath, rootPath.HostRootPath);
+                                    break;
+                                }
+                            }
+
+                            if (Directory.Exists(mediaPath))
+                            {
+                                var finalWritePath = Path.Combine(mediaPath, FileConstants.PlexMatchFileName);
+
+                                if (options.NoOverwrite && File.Exists(finalWritePath))
+                                {
+                                    logger.LogInformation(MessageConstants.NoWriteBecauseDisabled, item.MediaItemTitle);
+                                    continue;
+                                }
+
+                                using StreamWriter sw = new StreamWriter(finalWritePath, false);
+                                PlexMatchFileHelper.WritePlexMatchFile(sw, plexMatchPathAndFile.Value);
+                                logger.LogInformation(MessageConstants.PlexMatchSeasonWritten, item.MediaItemTitle, plexMatchPathAndFile.Value.SeasonNumber, plexMatchPathAndFile.Key);
+                            }
+                            else
+                            {
+                                logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
+                            }
                         }
                     }
                 }
@@ -207,7 +339,8 @@ namespace PlexMatchGenerator.Services
                 carryoverResults = new ProcessingResults { Success = true };
             }
 
-            carryoverResults.RecordsProcessed += items.Count;
+            carryoverResults.RecordsProcessed += itemsProcessed;
+            carryoverResults.RecordsSkipped += itemsSkipped;
 
             return await BatchProcessLibrary(client, library, options, startingIndex + options.ItemsPerPage, carryoverResults);
         }

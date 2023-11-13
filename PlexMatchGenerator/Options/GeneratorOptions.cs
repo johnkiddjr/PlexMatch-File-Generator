@@ -8,5 +8,8 @@
         public string LogPath { get; set; }
         public bool NoOverwrite { get; set; }
         public int ItemsPerPage { get; set; }
+        public List<string> LibraryNames { get; set; }
+        public List<string> ShowNames { get; set; }
+        public bool EnablePerSeasonProcessing { get; set; }
     }
 }
