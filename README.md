@@ -11,6 +11,8 @@ The command is expecting 2 arguments from the command line
 
 For information on how to get your Plex token, see this support link: [https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
 
+As of release 0.9.2-rc2 the default behavior for TV Show processing is to perform per season processing when episode ordering is set to anything other than library default. This action preserves the episode ordering as currently set.
+
 ### Optional Parameters
 
 - Modify root path (-r or --root)
@@ -19,12 +21,17 @@ For information on how to get your Plex token, see this support link: [https://s
 - Set log path (-l or --log)
   - This will output the log to file at the path specified, log file will be named `plexmatch.log` in the directory specified. The path specified must exist! If this option is not specified, no log file will be output.
   - Usage: -l /home/user/logs
+- Per season processing of TV Shows (-sp or --seasonprocessing)
+  - This will process each season of each TV Show individually writing a plexmatch file for both the show as a whole and each season
+  - This behavior is the default for any show with the episode sorting set to anything other than the library default
+  - Usage: -sp
 - Restrict to specific libraries (-lib or --library)
   - This parameter can be specified multiple times
   - Each library specified is added to the allow list
   - If even 1 library is added, every library not matching will be ignored
   - Library names are **not** case-sensitive
   - Usage: -lib TV
+  - Usage: -lib "TV Shows"
 - Restrict to specific media items (-s or --show)
   - Despite the parameter name, this can be used on any library and is not restricted to TV Shows
   - This works best when specified with -lib as otherwise this will have a significant performance impact on larger libraries
