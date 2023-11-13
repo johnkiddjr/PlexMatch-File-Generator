@@ -22,6 +22,32 @@ namespace PlexMatchGenerator.RestModels
         public List<MediaItemLocation> MediaItemLocations { get; set; }
         [JsonProperty("Media")]
         public List<MediaInfo> MediaInfos { get; set; }
+        [JsonProperty("type")]
+        public string MediaType { get; set; }
+        [JsonProperty("index")] // from my testing this index is always the season number... but I fear it may not always be true
+        public int SeasonNumber { get; set; }
+        [JsonIgnore]
+        public ShowOrdering ShowOrdering
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_ordering))
+                {
+                    return ShowOrdering.Default;
+                }
+                return _ordering switch
+                {
+                    "absolute" => ShowOrdering.TVDBAbsolute,
+                    "aired" => ShowOrdering.TVDBAired,
+                    "dvd" => ShowOrdering.TVDBDVD,
+                    "tmdb" => ShowOrdering.TMDBAired,
+                    _ => ShowOrdering.Default
+                };
+            }
+        }
+
+        [JsonProperty("showOrdering")]
+        private string _ordering;
     }
 
     public class MediaItemLocation: IMediaPath
