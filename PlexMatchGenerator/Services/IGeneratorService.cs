@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PlexMatchGenerator.Abstractions;
 using PlexMatchGenerator.Constants;
@@ -221,9 +221,13 @@ namespace PlexMatchGenerator.Services
                             }
 
                             using StreamWriter sw = new StreamWriter(finalWritePath, false);
-                            sw.WriteLine($"{MediaConstants.PlexMatchTitleHeader}{item.MediaItemTitle}");
-                            sw.WriteLine($"{MediaConstants.PlexMatchYearHeader}{item.MediaItemReleaseYear}");
-                            sw.WriteLine($"{MediaConstants.PlexMatchGuidHeader}{item.MediaItemPlexMatchGuid}");
+                            PlexMatchFileHelper.WritePlexMatchFile(sw, new PlexMatchInfo
+                            {
+                                FileType = PlexMatchFileType.Main,
+                                MediaItemTitle = item.MediaItemTitle,
+                                MediaItemReleaseYear = item.MediaItemReleaseYear,
+                                MediaItemPlexMatchGuid = item.MediaItemPlexMatchGuid
+                            });
 
                             logger.LogInformation(MessageConstants.PlexMatchWritten, item.MediaItemTitle);
                         }
