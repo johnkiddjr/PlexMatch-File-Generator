@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PlexMatchGenerator.Abstractions;
 using PlexMatchGenerator.Constants;
@@ -234,6 +234,101 @@ namespace PlexMatchGenerator.Services
                         else
                         {
                             logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
+                        }
+                    }
+
+                    // if per season processing is enable, or this uses non-standard sorting, process the seasons
+                    if (item.MediaType == "show" && (options.EnablePerSeasonProcessing || locationInfo.ShowOrdering != ShowOrdering.Default))
+                    {
+                        Dictionary<string, PlexMatchInfo> seasonPaths = new Dictionary<string, PlexMatchInfo>();
+                        // get the season information
+                        var seasonInfo = await RestClientHelper.CreateAndGetRestResponse<MediaItemRoot>(
+                            client, 
+                            $"{PlexApiConstants.MetaDataRequestUrl}/{item.MediaItemId}/{PlexApiConstants.MediaItemChildren}", 
+                            Method.Get);
+
+                        // make sure there is at least 1 season
+                        if(seasonInfo?.MediaItemContainer?.MediaItems?.Any() != true)
+                        {
+                            continue;
+                        }
+
+                        // get the season children information so we can extract the season path(s) information
+                        foreach (var season in seasonInfo.MediaItemContainer.MediaItems)
+                        {
+                            var seasonChildrenInfo = await RestClientHelper.CreateAndGetRestResponse<MediaItemInfoRoot>(
+                                client, 
+                                $"{PlexApiConstants.MetaDataRequestUrl}/{season.MediaItemId}/{PlexApiConstants.MediaItemChildren}",
+                                Method.Get);
+
+                            var seasonChildren = seasonChildrenInfo?.MediaItemInfoContainer?.MediaItemInfos;
+
+                            if(seasonChildren?.Any() != true)
+                            {
+                                continue;
+                            }
+
+                            var uniqueSeasonPaths = seasonChildren
+                                .SelectMany(episode => episode.MediaInfos
+                                    .SelectMany(info => info.MediaParts
+                                        .Select(part => Path.GetDirectoryName(part.MediaItemPath))))
+                                .Distinct()
+                                .ToList();
+
+                            foreach (var path in uniqueSeasonPaths)
+                            {
+                                if (!seasonPaths.ContainsKey(path))
+                                {
+                                    seasonPaths.Add(path, new PlexMatchInfo
+                                    {
+                                        FileType = PlexMatchFileType.Season,
+                                        MediaItemTitle = item.MediaItemTitle,
+                                        MediaItemReleaseYear = item.MediaItemReleaseYear,
+                                        MediaItemPlexMatchGuid = season.MediaItemPlexMatchGuid, //use the season plexmatch guid
+                                        SeasonNumber = season.SeasonNumber
+                                    });
+                                }
+                            }
+                        }
+
+
+                        // write the plexmatch file for the season
+                        foreach (var plexMatchPathAndFile in seasonPaths)
+                        {
+                            var mediaPath = plexMatchPathAndFile.Key;
+
+                            foreach (var rootPath in options.RootPaths)
+                            {
+                                // ensure both rootpath and mediapath use the same directory separator
+                                var normalizedRootPath = Path.GetFullPath(rootPath.PlexRootPath);
+                                var normalizedMediaPath = Path.GetFullPath(mediaPath);
+                                
+
+                                if (normalizedMediaPath.StartsWith(normalizedRootPath))
+                                {
+                                    mediaPath = normalizedMediaPath.Replace(normalizedRootPath, rootPath.HostRootPath);
+                                    break;
+                                }
+                            }
+
+                            if (Directory.Exists(mediaPath))
+                            {
+                                var finalWritePath = Path.Combine(mediaPath, FileConstants.PlexMatchFileName);
+
+                                if (options.NoOverwrite && File.Exists(finalWritePath))
+                                {
+                                    logger.LogInformation(MessageConstants.NoWriteBecauseDisabled, item.MediaItemTitle);
+                                    continue;
+                                }
+
+                                using StreamWriter sw = new StreamWriter(finalWritePath, false);
+                                PlexMatchFileHelper.WritePlexMatchFile(sw, plexMatchPathAndFile.Value);
+                                logger.LogInformation(MessageConstants.PlexMatchSeasonWritten, item.MediaItemTitle, plexMatchPathAndFile.Value.SeasonNumber, plexMatchPathAndFile.Key);
+                            }
+                            else
+                            {
+                                logger.LogError(MessageConstants.FolderMissingOrInvalid, mediaPath);
+                            }
                         }
                     }
                 }
