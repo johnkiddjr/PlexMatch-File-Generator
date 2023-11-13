@@ -124,6 +124,20 @@ namespace PlexMatchGenerator.Helpers
                 CommandConstants.ShowCommandHelpName,
                 CommandConstants.ShowCommandName);
 
+            var perSeasonProcessingAliases = new string[]
+            {
+                CommandConstants.PerSeasonProcessingCommandUnixLong,
+                CommandConstants.PerSeasonProcessingCommandUnixShort,
+                CommandConstants.PerSeasonProcessingCommandWindowsLong,
+                CommandConstants.PerSeasonProcessingCommandWindowsShort
+            };
+
+            var perSeasonProcessingOption = GenerateOption<bool>(
+                perSeasonProcessingAliases,
+                CommandConstants.PerSeasonProcessingCommandDescription,
+                CommandConstants.PerSeasonProcessingCommandHelpName,
+                CommandConstants.PerSeasonProcessingCommandName);
+
             rootCommand.AddOption(tokenOption);
             rootCommand.AddOption(urlOption);
             rootCommand.AddOption(rootOption);
@@ -132,11 +146,30 @@ namespace PlexMatchGenerator.Helpers
             rootCommand.AddOption(noOverwriteOption);
             rootCommand.AddOption(libraryOption);
             rootCommand.AddOption(showOption);
+            rootCommand.AddOption(perSeasonProcessingOption);
 
             rootCommand.SetHandler(
-                async (string token, string url, List<string> rootPaths, string log, int pageSize, bool overwrite, List<string> libraries, List<string> shows) =>
+                async (
+                    string token, 
+                    string url, 
+                    List<string> rootPaths, 
+                    string log, 
+                    int pageSize, 
+                    bool overwrite, 
+                    List<string> libraries, 
+                    List<string> shows,
+                    bool seasonProcessing) =>
                 {
-                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(token, url, rootPaths, log, overwrite, pageSize, libraries, shows);
+                    var generatorOptions = ArgumentHelper.ProcessCommandLineResults(
+                        token, 
+                        url, 
+                        rootPaths, 
+                        log, 
+                        overwrite, 
+                        pageSize, 
+                        libraries, 
+                        shows,
+                        seasonProcessing);
                     await handler(generatorOptions, args);
                 },
                 tokenOption,
@@ -146,7 +179,8 @@ namespace PlexMatchGenerator.Helpers
                 pageSizeOption,
                 noOverwriteOption,
                 libraryOption,
-                showOption);
+                showOption,
+                perSeasonProcessingOption);
 
             return await rootCommand.InvokeAsync(args);
         }
