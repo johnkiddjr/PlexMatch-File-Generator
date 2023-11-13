@@ -16,6 +16,10 @@ namespace PlexMatchGenerator.RestModels
 
     public class MediaItem
     {
+        [JsonProperty("index")]
+        public int SeasonNumber { get; set; }
+        [JsonProperty("type")]
+        public string MediaType { get; set; }
         [JsonProperty("ratingKey")]
         public string MediaItemId { get; set; }
         [JsonProperty("guid")]

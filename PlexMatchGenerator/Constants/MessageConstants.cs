@@ -10,6 +10,7 @@
         public const string FolderMissingOrInvalid = "Missing or Invalid Folder: {path}";
         public const string CompletedMessage = "Operation Completed";
         public const string PlexMatchWritten = ".plexmatch file written successfully for: {mediaTitle}";
+        public const string PlexMatchSeasonWritten = ".plexmatch file written successfully for: {mediaTitle} Season {seasonNumber} in path {seasonPath}";
         public const string NoMediaFound = "No media location found for: {mediaItemTitle}";
         public const string NoLocationInfoForItemFound = "Item with title {itemTitle} and ID {itemId} returned no location information";
         public const string LoggerAttachedMessage = "Logger attached. Startup complete. Running file generator...";

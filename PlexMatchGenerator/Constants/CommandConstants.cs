@@ -67,7 +67,7 @@
         public const string NoOverwriteCommandWindowsLong = $"/{NoOverwriteCommandName}";
         public const string NoOverwriteCommandWindowsShort = $"/{NoOverwriteCommandShortName}";
 
-        public const string PageSizeCommandDescription = "Sets page size to request (default 20)";
+        public const string PageSizeCommandDescription = "Sets page size to request (default: 20)";
         public const string PageSizeCommandHelpName = "Sets the page size";
         public const string PageSizeCommandName = "pagesize";
         public const string PageSizeCommandShortName = "ps";
@@ -75,5 +75,14 @@
         public const string PageSizeCommandUnixShort = $"-{PageSizeCommandShortName}";
         public const string PageSizeCommandWindowsLong = $"/{PageSizeCommandName}";
         public const string PageSizeCommandWindowsShort = $"/{PageSizeCommandShortName}";
+
+        public const string PerSeasonProcessingCommandDescription = "Enables per season process for all items, default behavior processes seasons only when non-default episode ordering is used.";
+        public const string PerSeasonProcessingCommandHelpName = "Enables per season processing";
+        public const string PerSeasonProcessingCommandName = "seasonprocessing";
+        public const string PerSeasonProcessingCommandShortName = "sp";
+        public const string PerSeasonProcessingCommandUnixLong = $"--{PerSeasonProcessingCommandName}";
+        public const string PerSeasonProcessingCommandUnixShort = $"-{PerSeasonProcessingCommandShortName}";
+        public const string PerSeasonProcessingCommandWindowsLong = $"/{PerSeasonProcessingCommandName}";
+        public const string PerSeasonProcessingCommandWindowsShort = $"/{PerSeasonProcessingCommandShortName}";
     }
 }

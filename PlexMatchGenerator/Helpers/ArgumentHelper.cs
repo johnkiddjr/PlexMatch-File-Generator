@@ -14,7 +14,8 @@ namespace PlexMatchGenerator.Helpers
             bool noOverwrite, 
             int pageSize, 
             List<string> libraries, 
-            List<string> shows)
+            List<string> shows,
+            bool seasonProcessing)
         {
             //ensure we end the path with a slash
             if (logPath != null && !logPath.EndsWith("\\") && !logPath.EndsWith('/'))
@@ -34,7 +35,8 @@ namespace PlexMatchGenerator.Helpers
                 NoOverwrite = noOverwrite,
                 ItemsPerPage = pageSize == 0 ? 20 : pageSize,
                 LibraryNames = libraries,
-                ShowNames = shows
+                ShowNames = shows,
+                EnablePerSeasonProcessing = seasonProcessing
             };
         }
 
