@@ -8,8 +8,7 @@ namespace PlexMatchGenerator.Helpers
     {
         public static RestClient GenerateClient(string plexUrl, string plexToken)
         {
-            var client = new RestClient(plexUrl);
-            client.UseNewtonsoftJson();
+            var client = new RestClient(plexUrl, configureSerialization: s => s.UseNewtonsoftJson());
             client.AddDefaultHeader(KnownHeaders.Accept, HttpConstants.ApplicationJson);
             client.AddDefaultHeader(HttpConstants.PlexTokenHeaderName, plexToken);
 

@@ -149,38 +149,31 @@ namespace PlexMatchGenerator.Helpers
             rootCommand.AddOption(perSeasonProcessingOption);
 
             rootCommand.SetHandler(
-                async (
-                    string token, 
-                    string url, 
-                    List<string> rootPaths, 
-                    string log, 
-                    int pageSize, 
-                    bool overwrite, 
-                    List<string> libraries, 
-                    List<string> shows,
-                    bool seasonProcessing) =>
+                async (context) =>
                 {
+                    var token = context.ParseResult.GetValueForOption(tokenOption);
+                    var url = context.ParseResult.GetValueForOption(urlOption);
+                    var rootPaths = context.ParseResult.GetValueForOption(rootOption);
+                    var log = context.ParseResult.GetValueForOption(logOption);
+                    var pageSize = context.ParseResult.GetValueForOption(pageSizeOption);
+                    var overwrite = context.ParseResult.GetValueForOption(noOverwriteOption);
+                    var libraries = context.ParseResult.GetValueForOption(libraryOption);
+                    var shows = context.ParseResult.GetValueForOption(showOption);
+                    var seasonProcessing = context.ParseResult.GetValueForOption(perSeasonProcessingOption);
+
                     var generatorOptions = ArgumentHelper.ProcessCommandLineResults(
-                        token, 
-                        url, 
-                        rootPaths, 
-                        log, 
-                        overwrite, 
-                        pageSize, 
-                        libraries, 
+                        token,
+                        url,
+                        rootPaths,
+                        log,
+                        overwrite,
+                        pageSize,
+                        libraries,
                         shows,
                         seasonProcessing);
+
                     await handler(generatorOptions, args);
-                },
-                tokenOption,
-                urlOption,
-                rootOption,
-                logOption,
-                pageSizeOption,
-                noOverwriteOption,
-                libraryOption,
-                showOption,
-                perSeasonProcessingOption);
+                });
 
             return await rootCommand.InvokeAsync(args);
         }
